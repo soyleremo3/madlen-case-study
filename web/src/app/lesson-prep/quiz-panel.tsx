@@ -5,6 +5,7 @@ import { Button, CopyButton, DraftBadge, ErrorNote, LoadingSteps, postJson } fro
 import type { LessonPlan } from "@/lib/lesson";
 import type { Curriculum, Grade, Language } from "@/lib/options";
 import { LETTERS, QUIZ_LABELS, quizToText, type Quiz } from "@/lib/quiz";
+import { DICT, currentUiLang } from "@/lib/i18n";
 
 export type PrintTarget = "plan" | "quiz-student" | "quiz-key";
 
@@ -33,11 +34,15 @@ export function QuizPanel({
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAnswers, setShowAnswers] = useState(true);
+  // Answer key starts hidden so the teacher can project or print questions first; one click shows it.
+  const [showAnswers, setShowAnswers] = useState(false);
+  // Questions already shown for this plan, so "Make another quiz" asks for genuinely new ones.
+  const [asked, setAsked] = useState<string[]>([]);
 
   async function create() {
     setLoading(true);
     setError(null);
+    setShowAnswers(false);
     try {
       const data = await postJson<{ quiz: Quiz }>("/api/quiz", {
         title: plan.title,
@@ -47,10 +52,12 @@ export function QuizPanel({
         objectives: plan.objectives.map((o) => o.text),
         keyConcepts: plan.keyConcepts.map((k) => k.term),
         misconceptions: plan.misconceptions.map((m) => m.misconception),
+        avoid: asked.slice(-15),
       });
       setQuiz(data.quiz);
+      setAsked((prev) => [...prev, ...data.quiz.questions.map((q) => q.question)].slice(-15));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setError(e instanceof Error ? e.message : DICT[currentUiLang()].genericError);
     } finally {
       setLoading(false);
     }

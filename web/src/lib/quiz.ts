@@ -10,6 +10,8 @@ export const quizRequestSchema = z.object({
   objectives: z.array(z.string().trim().max(400)).min(1).max(3),
   keyConcepts: z.array(z.string().trim().max(200)).max(8).default([]),
   misconceptions: z.array(z.string().trim().max(300)).max(3).default([]),
+  /** Questions from earlier quizzes for this plan; the new quiz must not repeat or paraphrase them. */
+  avoid: z.array(z.string().trim().max(500)).max(15).default([]),
 });
 export type QuizRequest = z.infer<typeof quizRequestSchema>;
 

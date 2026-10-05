@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = quizRequestSchema.safeParse(body);
   if (!parsed.success) return jsonError(msg(req, "planFirst"), 400);
-  const { title, grade, curriculum, language, objectives, keyConcepts, misconceptions } = parsed.data;
+  const { title, grade, curriculum, language, objectives, keyConcepts, misconceptions, avoid } = parsed.data;
   const list = (xs: string[]) => xs.map((x) => `- ${x.replace(/\s+/g, " ")}`).join("\n");
 
   try {
@@ -42,7 +42,11 @@ Grade: ${grade} (students about ${ageForGrade(grade)} years old)
 Curriculum context: ${curriculumContext(curriculum, grade)}
 Objectives:
 ${list(objectives)}
-${keyConcepts.length ? `Key concepts:\n${list(keyConcepts)}\n` : ""}${misconceptions.length ? `Common misconceptions to target with distractors:\n${list(misconceptions)}\n` : ""}
+${keyConcepts.length ? `Key concepts:\n${list(keyConcepts)}\n` : ""}${misconceptions.length ? `Common misconceptions to target with distractors:\n${list(misconceptions)}\n` : ""}${
+          avoid.length
+            ? `The teacher already has these questions. Write 5 NEW questions that test the same objectives from different angles. Do not repeat or paraphrase them, and do not reuse the same scenario or experiment even with the direction, numbers or names changed (e.g. if a lamp was moved away before, do not move a lamp closer now). Use different contexts, representations (data table, diagram description, everyday situation) and question types:\n${list(avoid)}\n`
+            : ""
+        }
 Write everything in ${languageName(language)}${language === "tr" ? " only (no English words)" : ""}.`,
       },
       req.signal,
