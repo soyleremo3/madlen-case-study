@@ -10,6 +10,9 @@ Neredeyse her şeyi Claude Code (Claude Opus) ile yaptım. Madlen'i ve rakipleri
 ## Nerede araç değiştirdim, neden?
 Instagram gönderisi için önce Canva AI'ı denedim. Tek sayfalık tasarımlar verdi, Türkçe metnimi İngilizce dolgu metniyle değiştirdi ve yanlış bir formül yazdı; ben de slaytları HTML/CSS ile yapıp Chrome ile dışa aktardım. Uygulamada Gemini Flash ile başladım, ama test günü "yoğunluk" hataları verdi ve ücretsiz katmanda günde sadece 20 isteğe izin veriyor. Artık önce Flash Lite çalışıyor, Flash yedekte.
 
+## Hâlâ pürüzlü ya da bitmemiş olan ne, sırada neyi düzeltirdim?
+Üç araç şu an birbirinden bağımsız çalışıyor. Ders planları, quizler ve kompozisyon değerlendirmeleri kaydedilmiyor ve bir quiz henüz sınıfa gönderilemiyor. Sırada bunları birbirine bağlamak var: öğretmen dersi planlayıp quizi öğrencilere gönderebilmeli ve sonuçları tek yerde görebilmeli. Bu, Madlen'in UVP'sinin merkezindeki bağlantılı döngü.
+
 ## Hangi UI/UX kararlarını aldım, neden?
 Öğrencinin ne göreceğine öğretmen karar veriyor. Ders planları, quizler ve kompozisyon geri bildirimleri yapay zekâ taslağı olarak işaretli, her puan ve not düzenlenebiliyor ve kompozisyon geri bildirimi ancak öğretmen onayladıktan sonra kopyalanabiliyor. Madlen de böyle çalışıyor; MEB de yapay zekâ üzerinde insan gözetimi şartı koyuyor.
 Turuncu öğretmenin eylemlerini, mor yapay zekânın önerilerini gösteriyor. Kompozisyon notları, kenara yazılmış yorumlar gibi ilgili cümlenin yanında duruyor.
