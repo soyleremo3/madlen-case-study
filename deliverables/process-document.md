@@ -10,9 +10,6 @@ I built almost everything with Claude Code (Claude Opus). I used it to research 
 ## Where did I switch tools, and why?
 I tried Canva AI first for the Instagram post. It returned single-page designs, replaced my Turkish text with English filler and printed a wrong formula, so I built the slides in HTML/CSS and exported them with Chrome. In the app I started with Gemini Flash, but on test day it returned "high demand" errors, and its free tier allows only 20 requests a day. Flash Lite now runs first, with Flash as the backup.
 
-## What is still rough, and what would I fix next?
-The demo runs on the free tier of the Gemini API, which allows about 500 requests a day. That is enough to review the app, and if the limit is reached the app says so and shows when it resets. A production version would use a paid key on Madlen's own infrastructure, which removes the limit and keeps student data in the EU.
-
 ## What UI/UX decisions did I make, and why?
 The teacher decides what students see. Lesson plans, quizzes and essay feedback are labelled as AI drafts, every score and note can be edited, and essay feedback can only be copied after the teacher approves it. Madlen works the same way, and MEB requires human oversight of AI.
 Orange marks the teacher's actions and purple marks the AI's suggestions. Essay notes sit next to the sentence they refer to, like comments in the margin.
