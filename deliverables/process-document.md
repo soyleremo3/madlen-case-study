@@ -21,7 +21,7 @@ Three tools in one site: Lesson prep, Study helper and Essay feedback. It is nam
 - **Curriculum depth:** the tools use MEB Maarif terminology but never invent outcome codes. Next: real outcome mapping from Madlen's database.
 
 ## Deliberate UI/UX decisions
-- **The teacher is always in control.** Every AI output carries a "Draft" badge. Essay feedback can be copied or printed only after "Approve feedback", and every score and note is editable. This mirrors Madlen's own stance and the MEB human-oversight rule.
+- **The teacher is always in control.** Every AI output carries an "AI draft" badge. Essay feedback can be copied or printed only after "Approve feedback", and every score and note is editable. This mirrors Madlen's own stance and the MEB human-oversight rule.
 - **Colour has meaning.** Orange marks teacher actions and purple marks the AI's voice, like a second pen in the margin. Essay notes sit next to the exact sentence they refer to. The colours are close to Madlen's brand; orange text uses a darker shade to pass WCAG AA contrast.
 - **Fast first use.** Only topic and grade are required, with example chips and a "Try a sample essay" button. Loading shows named steps instead of a bare spinner.
 - **Learning over answers.** The Study helper uses a 4-step hint ladder for practice questions, gives an outline instead of a ready-made essay for writing tasks, and replies with a fixed message pointing to a trusted adult and 112 if a student writes about self-harm.

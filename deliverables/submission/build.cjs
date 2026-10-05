@@ -1,5 +1,5 @@
-// Builds the submission PDF: inserts process-document.md into submission.html, then prints with headless Chrome.
-// Usage: node deliverables/submission/build.cjs
+// Builds the submission PDFs (English + Turkish): inserts the process document into each page, then prints with headless Chrome.
+// Usage: node deliverables/submission/build.cjs   (KEEP=1 keeps the intermediate HTML for layout checks)
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
@@ -27,20 +27,26 @@ function mdToHtml(md) {
   return inList ? html + "</ul>" : html;
 }
 
-const processMd = fs.readFileSync(path.join(dir, "..", "process-document.md"), "utf8");
-const page = fs.readFileSync(path.join(dir, "submission.html"), "utf8").replace("<!--PROCESS-->", mdToHtml(processMd));
-const built = path.join(dir, ".built.html");
-fs.writeFileSync(built, page);
-
 const chrome = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const pdf = path.join(dir, "madlen-case-study-submission.pdf");
-execFileSync(chrome, [
-  "--headless=new",
-  "--disable-gpu",
-  "--no-pdf-header-footer",
-  "--virtual-time-budget=8000",
-  `--print-to-pdf=${pdf}`,
-  "file:///" + built.replace(/\\/g, "/"),
-], { stdio: "ignore" });
-if (!process.env.KEEP) fs.unlinkSync(built);
-console.log("wrote", pdf);
+const builds = [
+  { page: "submission.html", process: "process-document.md", pdf: "madlen-case-study-submission.pdf" },
+  { page: "submission.tr.html", process: "process-document.tr.md", pdf: "madlen-case-study-submission-tr.pdf" },
+];
+
+for (const b of builds) {
+  const processMd = fs.readFileSync(path.join(dir, "..", b.process), "utf8");
+  const page = fs.readFileSync(path.join(dir, b.page), "utf8").replace("<!--PROCESS-->", mdToHtml(processMd));
+  const built = path.join(dir, `.built-${b.page}`);
+  fs.writeFileSync(built, page);
+  const pdf = path.join(dir, b.pdf);
+  execFileSync(chrome, [
+    "--headless=new",
+    "--disable-gpu",
+    "--no-pdf-header-footer",
+    "--virtual-time-budget=8000",
+    `--print-to-pdf=${pdf}`,
+    "file:///" + built.replace(/\\/g, "/"),
+  ], { stdio: "ignore" });
+  if (!process.env.KEEP) fs.unlinkSync(built);
+  console.log("wrote", pdf);
+}
