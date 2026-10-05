@@ -20,6 +20,7 @@ import {
 } from "@/components/ui";
 import { DURATIONS, EXAMPLES, LESSON_LABELS, planToText, type LessonLabels, type LessonPlan } from "@/lib/lesson";
 import { curriculumLabel, type Curriculum, type Grade, type Language } from "@/lib/options";
+import { QuizPanel, type PrintTarget } from "./quiz-panel";
 
 const durationOptions = DURATIONS.map((d) => ({ value: d, label: `${d} minutes` }));
 
@@ -82,7 +83,22 @@ export function LessonPrep() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
-  const [meta, setMeta] = useState({ grade: "7", duration: "40", curriculum: "MEB Maarif (TYMM)", language: "en" as Language });
+  const [meta, setMeta] = useState({
+    grade: "7" as Grade,
+    duration: "40",
+    curriculum: "MEB Maarif (TYMM)",
+    curriculumKey: "maarif" as Curriculum,
+    language: "en" as Language,
+  });
+  const [printTarget, setPrintTarget] = useState<PrintTarget>("plan");
+  const printAs = (target: PrintTarget) => {
+    setPrintTarget(target);
+    // Let React apply the print-area class before the print dialog opens.
+    setTimeout(() => {
+      window.print();
+      setPrintTarget("plan");
+    }, 60);
+  };
   const [editing, setEditing] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
@@ -97,7 +113,7 @@ export function LessonPrep() {
     try {
       const data = await postJson<{ plan: LessonPlan }>("/api/lesson", { topic, subject, grade, duration, curriculum, language, notes });
       setPlan(data.plan);
-      setMeta({ grade, duration, curriculum: curriculumLabel(curriculum), language });
+      setMeta({ grade, duration, curriculum: curriculumLabel(curriculum), curriculumKey: curriculum, language });
       requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
@@ -224,7 +240,7 @@ export function LessonPrep() {
                   {editing ? "Done editing" : "Edit plan"}
                 </Button>
                 <CopyButton text={currentText} label="Copy plan" />
-                <Button type="button" variant="quiet" onClick={() => window.print()}>
+                <Button type="button" variant="quiet" onClick={() => printAs("plan")}>
                   Print
                 </Button>
                 <Button type="button" variant="ghost" onClick={regenerate} disabled={!canSubmit}>
@@ -242,7 +258,7 @@ export function LessonPrep() {
               role={editing ? "textbox" : undefined}
               aria-multiline={editing ? true : undefined}
               aria-label={editing ? "Lesson plan (editable)" : undefined}
-              className={`print-area space-y-10 rounded-2xl border bg-white p-6 shadow-sheet outline-none sm:p-10 ${editing ? "border-purple ring-4 ring-purple/15" : "border-line"}`}
+              className={`${printTarget === "plan" ? "print-area" : ""} space-y-10 rounded-2xl border bg-white p-6 shadow-sheet outline-none sm:p-10 ${editing ? "border-purple ring-4 ring-purple/15" : "border-line"}`}
             >
               <header>
                 <p className="text-sm text-iron">
@@ -352,6 +368,16 @@ export function LessonPrep() {
                 </div>
               </div>
             </div>
+
+            <QuizPanel
+              key={plan.title}
+              plan={plan}
+              grade={meta.grade}
+              curriculum={meta.curriculumKey}
+              language={meta.language}
+              printTarget={printTarget}
+              onPrint={printAs}
+            />
           </div>
         ) : null}
       </div>

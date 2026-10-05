@@ -40,7 +40,10 @@ export function modelChain(): string[] {
 }
 
 /** Keep latency low; thinking level names differ per model family. */
-function providerOptionsFor(modelId: string) {
+/** "fast" for chat and drafts; "careful" where correctness matters more than speed (quiz answer keys). */
+export type Effort = "fast" | "careful";
+
+function providerOptionsFor(modelId: string, effort: Effort = "fast") {
   const google: GoogleLanguageModelOptions = {
     safetySettings: [
       // BLOCK_LOW_AND_ABOVE silently cut normal science answers and blocked
@@ -52,8 +55,8 @@ function providerOptionsFor(modelId: string) {
       { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" },
     ],
   };
-  if (/^gemini-3\.(8|7|6)-flash$/.test(modelId)) google.thinkingConfig = { thinkingLevel: "low" };
-  if (modelId === "gemini-3.5-flash-lite") google.thinkingConfig = { thinkingLevel: "minimal" };
+  if (/^gemini-3\.(8|7|6)-flash$/.test(modelId)) google.thinkingConfig = { thinkingLevel: effort === "careful" ? "medium" : "low" };
+  if (modelId === "gemini-3.5-flash-lite") google.thinkingConfig = { thinkingLevel: effort === "careful" ? "medium" : "minimal" };
   return { google };
 }
 
@@ -105,7 +108,11 @@ type GenerateArgs = Omit<Parameters<typeof generateText>[0], "model" | "maxRetri
  * generateText with model fallback. Use with `output: Output.object(...)`.
  * Returns the validated output; invalid/empty output counts as a failed attempt.
  */
-export async function generateWithFallback<T>(args: GenerateArgs, signal?: AbortSignal): Promise<{ output: T; modelId: string }> {
+export async function generateWithFallback<T>(
+  args: GenerateArgs,
+  signal?: AbortSignal,
+  effort: Effort = "fast",
+): Promise<{ output: T; modelId: string }> {
   const deadline = Date.now() + TOTAL_BUDGET_MS;
   let lastError: unknown;
   for (const id of modelChain()) {
@@ -118,7 +125,7 @@ export async function generateWithFallback<T>(args: GenerateArgs, signal?: Abort
         model: google(id),
         maxRetries: 0,
         abortSignal: attemptSignal(controller, signal, Math.min(ATTEMPT_TIMEOUT_MS, remaining)),
-        providerOptions: providerOptionsFor(id),
+        providerOptions: providerOptionsFor(id, effort),
       } as Parameters<typeof generateText>[0]);
       // Reading `output` throws if it is missing (e.g. blocked by a safety filter).
       const output = result.output as T;
