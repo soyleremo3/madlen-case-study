@@ -2,7 +2,9 @@
 
 ## The UVP (≤ 2 sentences)
 
-> **Madlen is the AI teaching assistant built for your curriculum, not adapted to it: lessons, questions and feedback arrive aligned to your learning outcomes — MEB Maarif, LGS/YKS, IB or Cambridge — and ready to assign. Because planning, assigning, marking and tracking happen in one connected loop, teachers win back hours and school leaders see real learning progress, not just activity.**
+> **Madlen is the AI teaching assistant built for your curriculum, not adapted to it: lessons, questions and feedback arrive aligned to your learning outcomes — MEB Maarif, LGS/YKS, IB or Cambridge — ready to assign, with the teacher always in control. Because planning, assigning, marking and tracking happen in one connected loop, teachers win back hours and school leaders see real learning progress, not just activity.**
+
+> v2 note: "with the teacher always in control" added after re-reading Madlen's own stance ("her çıktı öğretmen kontrolünden geçiyor") and MEB's human-oversight principle. "Ready to assign" means classroom-ready quality, not "no need to check".
 
 Short tagline version (for ads / social): **"Built for your curriculum. Ready for your class."**
 
@@ -26,7 +28,7 @@ Short tagline version (for ads / social): **"Built for your curriculum. Ready fo
 ## Proof points (use under the UVP in the deck / doc)
 - 18,566 teachers, 150+ K12 campuses (Madlen)
 - 308,062 teacher hours saved (Madlen Insight Report, Apr 2026)
-- 98% of generated questions assigned without edits (same report)
+- 98% of generated questions assigned without edits (same report). Use it as evidence of classroom-ready quality, never as "teachers don't need to check". Madlen's own report flags this tension.
 - KVKK + GDPR, processed in Germany, not transferred to the US (Madlen FAQ)
 
 ## Answering the case's own question
