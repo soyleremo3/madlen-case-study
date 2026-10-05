@@ -80,11 +80,46 @@ function describe(error: unknown): string {
   return error instanceof Error ? `${error.name}: ${error.message.slice(0, 160)}` : String(error).slice(0, 160);
 }
 
+/** Why a model attempt failed, in terms a user can act on. */
+export type FailureReason = "quota-day" | "quota-minute" | "quota" | "overload" | "timeout" | "bad-output" | "unavailable";
+
+function classify(error: unknown): FailureReason {
+  if (NoObjectGeneratedError.isInstance(error) || NoOutputGeneratedError.isInstance(error)) return "bad-output";
+  const e = RetryError.isInstance(error) ? error.lastError : error;
+  if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) return "timeout";
+  if (!APICallError.isInstance(e)) return "overload";
+  const s = e.statusCode ?? 0;
+  if (s === 429) {
+    // Google's quota errors name the exhausted limit (e.g. "...PerDay..." / "...PerMinute...").
+    const text = `${e.message} ${e.responseBody ?? ""}`;
+    if (/per\s?day/i.test(text)) return "quota-day";
+    if (/per\s?minute/i.test(text)) return "quota-minute";
+    return "quota";
+  }
+  if (s === 403 || s === 404) return "unavailable";
+  return "overload";
+}
+
 export class AllModelsBusyError extends Error {
-  constructor(cause: unknown) {
+  readonly reason: FailureReason;
+  constructor(failures: unknown[]) {
     super("All AI models are busy or out of quota right now.");
     this.name = "AllModelsBusyError";
-    this.cause = cause;
+    this.cause = failures.at(-1);
+    const reasons = failures.map(classify);
+    // The most actionable explanation wins: a daily limit means "come back later",
+    // a per-minute limit means "wait a minute", otherwise it's load or a bad answer.
+    this.reason = reasons.includes("quota-day")
+      ? "quota-day"
+      : reasons.includes("quota-minute")
+        ? "quota-minute"
+        : reasons.includes("quota")
+          ? "quota"
+          : reasons.includes("bad-output") && !reasons.includes("overload")
+            ? "bad-output"
+            : reasons.includes("timeout") && !reasons.includes("overload")
+              ? "timeout"
+              : "overload";
   }
 }
 
@@ -114,7 +149,7 @@ export async function generateWithFallback<T>(
   effort: Effort = "fast",
 ): Promise<{ output: T; modelId: string }> {
   const deadline = Date.now() + TOTAL_BUDGET_MS;
-  let lastError: unknown;
+  const failures: unknown[] = [];
   for (const id of modelChain()) {
     const remaining = deadline - Date.now();
     if (remaining < MIN_ATTEMPT_MS) break;
@@ -134,12 +169,12 @@ export async function generateWithFallback<T>(
     } catch (error) {
       controller.abort();
       if (signal?.aborted) throw new ClientAbortedError();
-      lastError = error;
+      failures.push(error);
       if (!isRetryableModelError(error)) throw error;
       console.warn(`[ai] ${id} failed (${describe(error)}), trying next model`);
     }
   }
-  throw new AllModelsBusyError(lastError);
+  throw new AllModelsBusyError(failures);
 }
 
 type StreamArgs = Omit<Parameters<typeof streamText>[0], "model" | "maxRetries" | "providerOptions" | "onError" | "abortSignal">;
@@ -151,7 +186,7 @@ type StreamArgs = Omit<Parameters<typeof streamText>[0], "model" | "maxRetries" 
  */
 export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal) {
   const deadline = Date.now() + TOTAL_BUDGET_MS;
-  let lastError: unknown;
+  const failures: unknown[] = [];
   for (const id of modelChain()) {
     const remaining = deadline - Date.now();
     if (remaining < MIN_ATTEMPT_MS) break;
@@ -199,7 +234,7 @@ export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal)
       controller.abort();
       reader.cancel().catch(() => {});
       if (signal?.aborted) throw new ClientAbortedError();
-      lastError = failed;
+      failures.push(failed);
       if (isRetryableModelError(failed)) {
         console.warn(`[ai] ${id} failed (${describe(failed)}), trying next model`);
         continue;
@@ -223,5 +258,5 @@ export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal)
     });
     return { stream, modelId: id };
   }
-  throw new AllModelsBusyError(lastError);
+  throw new AllModelsBusyError(failures);
 }

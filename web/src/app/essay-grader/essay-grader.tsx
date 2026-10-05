@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import {
   Button,
   CopyButton,
+  isRetryable,
   DraftBadge,
   EmptyState,
   ErrorNote,
@@ -207,6 +208,7 @@ export function EssayGrader() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryable, setRetryable] = useState(true);
   const [feedback, setFeedback] = useState<EssayFeedback | null>(null);
   const [submittedEssay, setSubmittedEssay] = useState("");
   const [notes, setNotes] = useState<Note[]>([]);
@@ -238,6 +240,7 @@ export function EssayGrader() {
       requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (e) {
       setError(e instanceof Error ? e.message : ui.genericError);
+      setRetryable(isRetryable(e));
     } finally {
       setLoading(false);
     }
@@ -334,7 +337,7 @@ export function EssayGrader() {
         {loading ? (
           <LoadingSteps steps={E.steps} />
         ) : null}
-        {error ? <ErrorNote message={error} onRetry={canSubmit ? submit : undefined} /> : null}
+        {error ? <ErrorNote message={error} onRetry={canSubmit && retryable ? submit : undefined} /> : null}
 
         {!loading && !error && !feedback ? (
           <EmptyState title={E.emptyTitle}>{E.emptyBody}</EmptyState>

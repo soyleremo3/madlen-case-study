@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, CopyButton, DraftBadge, ErrorNote, LoadingSteps, postJson } from "@/components/ui";
+import { Button, CopyButton, DraftBadge, ErrorNote, LoadingSteps, isRetryable, postJson } from "@/components/ui";
 import type { LessonPlan } from "@/lib/lesson";
 import type { Curriculum, Grade, Language } from "@/lib/options";
 import { LETTERS, QUIZ_LABELS, quizToText, type Quiz } from "@/lib/quiz";
@@ -34,6 +34,7 @@ export function QuizPanel({
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryable, setRetryable] = useState(true);
   // Answer key starts hidden so the teacher can project or print questions first; one click shows it.
   const [showAnswers, setShowAnswers] = useState(false);
   // Questions already shown for this plan, so "Make another quiz" asks for genuinely new ones.
@@ -58,6 +59,7 @@ export function QuizPanel({
       setAsked((prev) => [...prev, ...data.quiz.questions.map((q) => q.question)].slice(-15));
     } catch (e) {
       setError(e instanceof Error ? e.message : DICT[currentUiLang()].genericError);
+      setRetryable(isRetryable(e));
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ export function QuizPanel({
         {loading ? <LoadingSteps steps={[...t.loadingSteps]} everyMs={2200} /> : null}
         {error ? (
           <div className="mt-4">
-            <ErrorNote message={error} onRetry={create} />
+            <ErrorNote message={error} onRetry={retryable ? create : undefined} />
           </div>
         ) : null}
       </div>

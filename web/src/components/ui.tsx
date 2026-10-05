@@ -191,6 +191,19 @@ export function EmptyState({ title, children }: { title: string; children: React
   );
 }
 
+/** Error from our API. `retryable: false` means "Try again" won't help right now (e.g. daily quota). */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly retryable = true,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+export const isRetryable = (e: unknown) => !(e instanceof ApiError) || e.retryable;
+
 /** Shared POST helper with friendly errors. */
 export async function postJson<T>(url: string, body: unknown): Promise<T> {
   const lang = currentUiLang();
@@ -202,9 +215,9 @@ export async function postJson<T>(url: string, body: unknown): Promise<T> {
       body: JSON.stringify(body),
     });
   } catch {
-    throw new Error(DICT[lang].netError);
+    throw new ApiError(DICT[lang].netError);
   }
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error ?? DICT[lang].genericError);
+  if (!res.ok) throw new ApiError(data?.error ?? DICT[lang].genericError, data?.retryable !== false);
   return data as T;
 }

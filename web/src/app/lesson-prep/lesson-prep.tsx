@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import {
   Button,
   Chip,
+  isRetryable,
   CopyButton,
   DraftBadge,
   EmptyState,
@@ -86,6 +87,7 @@ export function LessonPrep() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryable, setRetryable] = useState(true);
   const [plan, setPlan] = useState<LessonPlan | null>(null);
   const [meta, setMeta] = useState({
     grade: "7" as Grade,
@@ -121,6 +123,7 @@ export function LessonPrep() {
       requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (e) {
       setError(e instanceof Error ? e.message : ui.genericError);
+      setRetryable(isRetryable(e));
     } finally {
       setLoading(false);
     }
@@ -225,7 +228,7 @@ export function LessonPrep() {
 
       <div ref={resultRef} className="scroll-mt-24">
         {loading ? <LoadingSteps steps={L.steps} /> : null}
-        {error ? <ErrorNote message={error} onRetry={canSubmit ? submit : undefined} /> : null}
+        {error ? <ErrorNote message={error} onRetry={canSubmit && retryable ? submit : undefined} /> : null}
         {!loading && !error && !plan ? (
           <EmptyState title={L.emptyTitle}>{L.emptyBody}</EmptyState>
         ) : null}

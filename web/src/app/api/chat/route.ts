@@ -128,7 +128,8 @@ SAFETY (the user is a child or teenager)
 }
 
 export async function POST(req: Request) {
-  if (isRateLimited(`chat:${clientIp(req)}`, 20)) return TOO_MANY(req);
+  const wait = isRateLimited(`chat:${clientIp(req)}`, 20);
+  if (wait) return TOO_MANY(req, wait);
 
   const body = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
@@ -163,7 +164,7 @@ export async function POST(req: Request) {
     return createUIMessageStreamResponse({
       stream: toUIMessageStream({
         stream: noteWhenFiltered(stream, FILTERED_NOTE[language]),
-        onError: () => "Sorry, the answer was interrupted. Please send your message again.",
+        onError: () => msg(req, "streamCut"),
       }),
     });
   } catch (error) {
