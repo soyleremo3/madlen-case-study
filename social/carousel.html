@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Madlen Carousel</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FEF5EC;
+    --cream-2: #FBE8D4;
+    --line: #F0D9C2;
+    --orange: #D9782D;
+    --orange-dark: #B65E1A;
+    --orange-soft: #FCE3CC;
+    --ink: #2A1F17;
+    --muted: #7A6656;
+    --purple: #8B78E6;
+    --purple-soft: #EDE8FF;
+    --green: #3C9A69;
+    --green-soft: #E2F3EA;
+    --white: #FFFFFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; background: var(--cream); }
+  body { font-family: "Inter", system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  .slide { position: relative; width: 1080px; height: 1350px; padding: 84px 88px 72px; display: flex; flex-direction: column; overflow: hidden;
+    background:
+      radial-gradient(circle at 92% 8%, rgba(217,120,45,.10) 0 180px, transparent 181px),
+      radial-gradient(circle at 4% 96%, rgba(139,120,230,.10) 0 220px, transparent 221px),
+      var(--cream); }
+
+  /* top bar */
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+  .brand { display: flex; align-items: center; gap: 14px; font-family: "Nunito", sans-serif; font-weight: 800; font-size: 40px; color: var(--orange); letter-spacing: -.5px; }
+  .brand svg { width: 46px; height: 46px; }
+  .count { font-size: 26px; font-weight: 600; color: var(--muted); background: var(--white); border: 2px solid var(--line); padding: 8px 20px; border-radius: 999px; }
+
+  .tag { display: inline-flex; align-items: center; gap: 12px; align-self: flex-start; font-size: 28px; font-weight: 700; color: var(--orange-dark); background: var(--orange-soft); padding: 12px 24px; border-radius: 999px; margin-bottom: 40px; }
+  .tag .dot { width: 12px; height: 12px; background: var(--orange); border-radius: 50%; }
+
+  h1 { font-family: "Playfair Display", Georgia, serif; font-weight: 800; font-size: 112px; line-height: 1.02; letter-spacing: -2px; }
+  h1.mid { font-size: 96px; }
+  h1 em { font-style: italic; }
+  .hl { background: var(--orange); color: var(--white); padding: 0 18px 6px; border-radius: 14px; display: inline-block; line-height: 1.05; transform: rotate(-1.2deg); }
+  .hl-p { background: var(--purple); color: var(--white); padding: 0 18px 6px; border-radius: 14px; display: inline-block; line-height: 1.05; transform: rotate(1deg); }
+
+  .sub { font-size: 40px; line-height: 1.35; color: var(--muted); font-weight: 500; margin-top: 32px; max-width: 860px; }
+  .sub strong { color: var(--ink); font-weight: 700; }
+
+  .bottom { margin-top: auto; display: flex; align-items: center; justify-content: space-between; font-size: 26px; color: var(--muted); font-weight: 600; }
+  .swipe { display: flex; align-items: center; gap: 12px; color: var(--orange-dark); }
+  .swipe svg { width: 40px; height: 40px; }
+  .foot { font-size: 22px; color: var(--muted); font-weight: 500; }
+
+  .doodle { position: absolute; pointer-events: none; }
+
+  /* slide 1: paper stack */
+  .stack { position: relative; height: 470px; margin-top: 44px; }
+  .paper { position: absolute; width: 500px; height: 380px; background: var(--white); border: 2px solid var(--line); border-radius: 22px; box-shadow: 0 18px 40px rgba(122,82,40,.12); padding: 44px 44px; }
+  .paper .ln { height: 14px; background: #EFE6DC; border-radius: 8px; margin-bottom: 26px; }
+  .paper .ln.red { background: transparent; border-bottom: 5px solid #E25B4B; border-radius: 0; height: 18px; width: 60%; margin-bottom: 22px; }
+  .p1 { left: 60px; top: 70px; transform: rotate(-7deg); }
+  .p2 { left: 150px; top: 40px; transform: rotate(4deg); }
+  .p3 { left: 240px; top: 70px; transform: rotate(-2deg); }
+  .sticky { position: absolute; right: 10px; top: 10px; z-index: 2; width: 270px; background: #FFE9A8; padding: 26px 28px; border-radius: 6px; transform: rotate(6deg); box-shadow: 0 14px 30px rgba(122,82,40,.15); font-weight: 700; }
+  .sticky .t { white-space: nowrap; font-size: 50px; font-family: "Playfair Display", serif; }
+  .sticky .s { font-size: 26px; color: #7A5B12; margin-top: 4px; }
+
+  /* slide 2: math */
+  .math { margin-top: 64px; background: var(--white); border: 2px solid var(--line); border-radius: 32px; padding: 56px 60px; box-shadow: 0 18px 40px rgba(122,82,40,.08); }
+  .math .eq { font-family: "Playfair Display", serif; font-weight: 800; font-size: 92px; letter-spacing: -1px; }
+  .math .eq span { color: var(--muted); font-weight: 700; }
+  .math .res { font-family: "Playfair Display", serif; font-weight: 800; font-size: 120px; color: var(--orange); margin-top: 8px; letter-spacing: -2px; }
+  .bars { display: flex; gap: 10px; margin-top: 36px; flex-wrap: wrap; }
+  .bars i { width: 34px; height: 46px; border-radius: 8px; background: var(--orange-soft); border: 2px solid #F3C9A4; }
+  .bars i.on { background: var(--orange); border-color: var(--orange); }
+
+  /* app mock */
+  .app { margin-top: 48px; background: var(--white); border: 2px solid var(--line); border-radius: 32px; box-shadow: 0 24px 50px rgba(122,82,40,.12); overflow: hidden; }
+  .app-h { display: flex; align-items: center; justify-content: space-between; padding: 26px 34px; border-bottom: 2px solid var(--line); background: #FFFBF7; }
+  .app-h .t { font-size: 30px; font-weight: 800; display: flex; gap: 14px; align-items: center; }
+  .app-h .t b { width: 18px; height: 18px; background: var(--orange); border-radius: 6px; display: inline-block; }
+  .pill { font-size: 22px; font-weight: 700; padding: 8px 18px; border-radius: 999px; }
+  .pill.ok { background: var(--green-soft); color: var(--green); }
+  .pill.wait { background: var(--purple-soft); color: #5B47C4; }
+  .app-b { padding: 30px 34px 34px; }
+  .file { display: flex; align-items: center; gap: 16px; background: var(--cream); border: 2px dashed #EBC9A8; border-radius: 18px; padding: 18px 22px; font-size: 26px; font-weight: 600; }
+  .file .ic { width: 66px; height: 56px; flex: none; background: #2F6FD8; border-radius: 8px; color: #fff; font-size: 16px; font-weight: 800; display: grid; place-items: center; }
+  .file small { display: block; color: var(--muted); font-weight: 500; font-size: 22px; margin-top: 2px; }
+  .chips { display: flex; gap: 12px; margin: 22px 0 6px; }
+  .chip { font-size: 22px; font-weight: 700; color: var(--orange-dark); background: var(--orange-soft); padding: 8px 18px; border-radius: 999px; }
+  .student { margin-top: 22px; border: 2px solid var(--line); border-radius: 20px; padding: 24px 26px; }
+  .st-h { display: flex; align-items: center; justify-content: space-between; }
+  .who { display: flex; align-items: center; gap: 14px; font-size: 28px; font-weight: 800; }
+  .av { width: 52px; height: 52px; border-radius: 50%; background: var(--purple-soft); color: #5B47C4; display: grid; place-items: center; font-size: 22px; font-weight: 800; }
+  .scores { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 20px 0 18px; }
+  .sc { font-size: 21px; font-weight: 600; color: var(--muted); }
+  .sc .bar { height: 12px; border-radius: 8px; background: #F3E6D9; margin-top: 8px; overflow: hidden; }
+  .sc .bar i { display: block; height: 100%; background: var(--orange); border-radius: 8px; }
+  .fb { font-size: 25px; line-height: 1.45; color: var(--ink); background: #FFFBF7; border-left: 6px solid var(--purple); padding: 16px 20px; border-radius: 10px; }
+  .caret { display: inline-block; width: 3px; height: 30px; background: var(--ink); vertical-align: -6px; margin-left: 2px; }
+  .actions { display: flex; gap: 16px; margin-top: 22px; justify-content: flex-end; }
+  .btn { font-size: 25px; font-weight: 800; padding: 16px 28px; border-radius: 16px; }
+  .btn.o { border: 2px solid var(--line); color: var(--ink); background: var(--white); }
+  .btn.f { background: var(--orange); color: var(--white); box-shadow: 0 10px 20px rgba(217,120,45,.3); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; }
+  .step { font-size: 26px; font-weight: 700; display: flex; align-items: center; gap: 14px; }
+  .step b { width: 50px; height: 50px; border-radius: 50%; background: var(--ink); color: var(--cream); display: grid; place-items: center; font-size: 24px; flex: none; }
+
+  .ticks { margin-top: 34px; display: grid; gap: 16px; }
+  .tick { font-size: 32px; font-weight: 600; display: flex; gap: 16px; align-items: center; }
+  .tick svg { width: 40px; height: 40px; flex: none; }
+  .note { margin-top: 30px; display: flex; gap: 14px; align-items: center; font-size: 23px; color: #5B47C4; background: var(--purple-soft); padding: 16px 22px; border-radius: 16px; font-weight: 600; }
+  .note svg { width: 34px; height: 34px; flex: none; }
+
+  /* slide 5 */
+  .cta { margin-top: 64px; display: inline-flex; align-self: flex-start; align-items: center; gap: 18px; background: var(--orange); color: var(--white); font-size: 42px; font-weight: 800; padding: 30px 46px; border-radius: 26px; box-shadow: 0 18px 36px rgba(217,120,45,.35); }
+  .cta svg { width: 44px; height: 44px; }
+  .social { display: flex; gap: 18px; margin-top: 40px; }
+  .social span { display: inline-flex; align-items: center; gap: 12px; font-size: 30px; font-weight: 700; background: var(--white); border: 2px solid var(--line); padding: 16px 26px; border-radius: 999px; }
+  .social svg { width: 34px; height: 34px; }
+  .sign { font-family: "Playfair Display", serif; font-style: italic; font-weight: 700; font-size: 40px; color: var(--orange-dark); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const ICON = {
+  shell: '<svg viewBox="0 0 48 48" fill="none" stroke="#D9782D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M24 41c-7 0-14-3-17-9-2-9 4-22 17-24 13 2 19 15 17 24-3 6-10 9-17 9z"/><path d="M24 41L15 13M24 41L24 9M24 41L33 13M24 41L9 22M24 41L39 22"/></svg>',
+  arrow: '<svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20h24M22 10l10 10-10 10"/></svg>',
+  check: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="#E2F3EA"/><path d="M12 20.5l5.5 5.5L28 15" fill="none" stroke="#3C9A69" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  shield: '<svg viewBox="0 0 34 34" fill="none" stroke="#5B47C4" stroke-width="2.6" stroke-linejoin="round"><path d="M17 3l11 4v9c0 7-5 12-11 15C11 28 6 23 6 16V7z"/><path d="M12 17l4 4 7-8" stroke-linecap="round"/></svg>',
+  bookmark: '<svg viewBox="0 0 34 34" fill="none" stroke="#2A1F17" stroke-width="2.8" stroke-linejoin="round"><path d="M9 4h16v26l-8-6-8 6z"/></svg>',
+  send: '<svg viewBox="0 0 34 34" fill="none" stroke="#2A1F17" stroke-width="2.8" stroke-linejoin="round"><path d="M30 4L4 15l11 4 4 11z"/><path d="M15 19L30 4"/></svg>',
+  sparkle: (c, s) => `<svg width="${s}" height="${s}" viewBox="0 0 40 40"><path d="M20 2c1.5 9 4 12.5 18 18-14 5.5-16.5 9-18 18-1.5-9-4-12.5-18-18 14-5.5 16.5-9 18-18z" fill="${c}"/></svg>`,
+  heart: (c, s) => `<svg width="${s}" height="${s}" viewBox="0 0 40 40" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"><path d="M20 34S5 25 5 14.5C5 9 9 6 13 6c3.5 0 5.7 2 7 4.5C21.3 8 23.5 6 27 6c4 0 8 3 8 8.5C35 25 20 34 20 34z"/></svg>`
+};
+
+const T = {
+  tr: {
+    tool: "Kompozisyon Değerlendirme",
+    swipe: "Kaydır",
+    s1: { h: 'Pazar akşamı.<br>Masada<br><span class="hl">32 kompozisyon.</span>', sticky: ["21:40", "7 / 32 bitti"], sub: "Tanıdık geldi mi?" },
+    s2: { eq: '32 <span>×</span> 10 dk', res: "= 5 saat 20 dk", sub: "Bir kompozisyonu dikkatle okuyup geri bildirim yazmak ortalama <strong>10 dakika</strong> sürüyor.*", sub2: "Ve 32. kompozisyon da ilki kadar <strong>özeni hak ediyor.</strong>", foot: "*Madlen İçgörü Raporu, 2026" },
+    s3: { h: 'Madlen okur,<br><em>taslağı</em> hazırlar.', file: "7-B_kompozisyonlar.docx", fileSub: "32 kompozisyon yüklendi", ready: "32 / 32 hazır", chips: ["Yapı", "Dil", "İçerik"], student: "Ada Y.", fb: "Giriş paragrafın konuyu net tanıtıyor. Gelişme bölümünde iddianı bir örnekle desteklersen yazın çok daha ikna edici olur.", steps: ["Yükle", "Rubriği seç", "Taslağı incele"] },
+    s4: { h: 'Son kararı<br><span class="hl-p">siz</span> verirsiniz.', wait: "Onayınızı bekliyor", edit: "Düzenle", ok: "Onayla ve paylaş", ticks: ["Her öğrenciye aynı rubrik, aynı özen", "Puanı ve yorumu siz düzenlersiniz", "Öğrenciyle paylaşmaya hazır özet"], note: "Öğrenci ürünlerini YZ ile değerlendirmeden önce YAZEK etik beyanınızı yapmayı unutmayın.", student: "Ada Y.", fb: "Giriş paragrafın konuyu net tanıtıyor. Gelişme bölümünde iddianı bir örnekle desteklersen yazın çok daha ikna edici olur." },
+    s5: { h: 'Pazar akşamınızı<br><span class="hl">geri alın.</span>', sub: "Kompozisyonlar Madlen'de taslağa dönüşsün; <strong>son söz ve özen sizde kalsın.</strong>", cta: "Ücretsiz deneyin · madlen.io", save: "Kaydet", share: "Zümrene gönder", sign: "Great Teachers, Great Futures." }
+  },
+  en: {
+    tool: "Essay Marking",
+    swipe: "Swipe",
+    s1: { h: 'Sunday evening.<br>On the desk:<br><span class="hl">32 essays.</span>', sticky: ["9:40 pm", "7 / 32 done"], sub: "Sound familiar?" },
+    s2: { eq: '32 <span>×</span> 10 min', res: "= 5 h 20 min", sub: "Reading an essay carefully and writing feedback takes about <strong>10 minutes.</strong>*", sub2: "And essay #32 deserves <strong>the same care as #1.</strong>", foot: "*Madlen Insight Report, 2026" },
+    s3: { h: 'Madlen reads.<br>You get a <em>draft.</em>', file: "7B_essays.docx", fileSub: "32 essays uploaded", ready: "32 / 32 ready", chips: ["Structure", "Language", "Content"], student: "Ada Y.", fb: "Your introduction presents the topic clearly. Back up your main claim with an example in the body and your essay will be far more convincing.", steps: ["Upload", "Pick a rubric", "Review drafts"] },
+    s4: { h: '<span class="hl-p">You</span> make<br>the final call.', wait: "Awaiting your approval", edit: "Edit", ok: "Approve & share", ticks: ["Same rubric, same care for every student", "You adjust every score and comment", "A short summary, ready to share"], note: "In Türkiye? File your YAZEK ethics declaration before using AI on student work.", student: "Ada Y.", fb: "Your introduction presents the topic clearly. Back up your main claim with an example in the body and your essay will be far more convincing." },
+    s5: { h: 'Take your<br>Sunday evening<br><span class="hl">back.</span>', sub: "Let Madlen turn essays into drafts; <strong>the final word and the care stay with you.</strong>", cta: "Try it free · madlen.io", save: "Save", share: "Send to your department", sign: "Great Teachers, Great Futures." }
+  }
+};
+
+const p = new URLSearchParams(location.search);
+const lang = p.get("lang") === "en" ? "en" : "tr";
+const n = Math.min(5, Math.max(1, parseInt(p.get("slide") || "1", 10)));
+const t = T[lang];
+document.documentElement.lang = lang;
+
+const topBar = `<div class="top"><div class="brand">${ICON.shell}madlen</div><div class="count">${n} / 5</div></div>`;
+const bottom = (left) => `<div class="bottom"><div class="foot">${left || ""}</div>${n < 5 ? `<div class="swipe">${t.swipe} ${ICON.arrow}</div>` : ""}</div>`;
+const tag = `<div class="tag"><span class="dot"></span>${t.tool}</div>`;
+
+const studentCard = (s, withActions) => `
+  <div class="student">
+    <div class="st-h"><div class="who"><div class="av">AY</div>${s.student}</div>
+      ${withActions ? `<span class="pill wait">${s.wait}</span>` : ""}</div>
+    <div class="scores">
+      ${(t.s3.chips).map((c, i) => `<div class="sc">${c} · ${[3, 4, 3][i]}/4<div class="bar"><i style="width:${[75, 100, 75][i]}%"></i></div></div>`).join("")}
+    </div>
+    <div class="fb">${s.fb}${withActions ? '<span class="caret"></span>' : ""}</div>
+    ${withActions ? `<div class="actions"><span class="btn o">${s.edit}</span><span class="btn f">${s.ok}</span></div>` : ""}
+  </div>`;
+
+const slides = {
+  1: () => `${topBar}${tag}<h1>${t.s1.h}</h1>
+    <div class="stack">
+      <div class="paper p1"><div class="ln"></div><div class="ln"></div><div class="ln red"></div><div class="ln"></div><div class="ln" style="width:70%"></div></div>
+      <div class="paper p2"><div class="ln"></div><div class="ln"></div><div class="ln"></div><div class="ln red"></div><div class="ln" style="width:55%"></div></div>
+      <div class="paper p3"><div class="ln"></div><div class="ln red"></div><div class="ln"></div><div class="ln"></div><div class="ln" style="width:80%"></div><div class="ln" style="width:40%"></div></div>
+      <div class="sticky"><div class="t">${t.s1.sticky[0]}</div><div class="s">${t.s1.sticky[1]}</div></div>
+    </div>
+    <div class="sub" style="margin-top:28px;position:relative;z-index:3"><strong>${t.s1.sub}</strong></div>
+    ${bottom()}
+    <div class="doodle" style="right:110px;top:300px">${ICON.sparkle("#8B78E6", 54)}</div>
+    <div class="doodle" style="right:200px;top:250px">${ICON.sparkle("#D9782D", 30)}</div>`,
+  2: () => `${topBar}${tag}
+    <div class="math">
+      <div class="eq">${t.s2.eq}</div>
+      <div class="res">${t.s2.res}</div>
+      <div class="bars">${Array.from({ length: 32 }, (_, i) => `<i class="${i < 7 ? "on" : ""}"></i>`).join("")}</div>
+    </div>
+    <div class="sub">${t.s2.sub}</div>
+    <div class="sub" style="margin-top:22px">${t.s2.sub2}</div>
+    ${bottom(t.s2.foot)}
+    <div class="doodle" style="right:96px;top:250px">${ICON.heart("#D9782D", 60)}</div>`,
+  3: () => `${topBar}<h1 class="mid">${t.s3.h}</h1>
+    <div class="app">
+      <div class="app-h"><div class="t"><b></b>${t.tool}</div><span class="pill ok">✓ ${t.s3.ready}</span></div>
+      <div class="app-b">
+        <div class="file"><div class="ic">DOCX</div><div>${t.s3.file}<small>${t.s3.fileSub}</small></div></div>
+        <div class="chips">${t.s3.chips.map(c => `<span class="chip">${c}</span>`).join("")}</div>
+        ${studentCard(t.s3, false)}
+      </div>
+    </div>
+    <div class="steps">${t.s3.steps.map((s, i) => `<div class="step"><b>${i + 1}</b>${s}</div>`).join("")}</div>
+    ${bottom()}
+    <div class="doodle" style="right:100px;top:170px">${ICON.sparkle("#8B78E6", 50)}</div>`,
+  4: () => `${topBar}<h1 class="mid">${t.s4.h}</h1>
+    <div class="app" style="margin-top:44px"><div class="app-b">${studentCard(t.s4, true)}</div></div>
+    <div class="ticks">${t.s4.ticks.map(x => `<div class="tick">${ICON.check}${x}</div>`).join("")}</div>
+    <div class="note">${ICON.shield}${t.s4.note}</div>
+    ${bottom()}`,
+  5: () => `${topBar}${tag}<h1 style="font-size:124px">${t.s5.h}</h1>
+    <div class="sub">${t.s5.sub}</div>
+    <div class="cta">${t.s5.cta} ${ICON.arrow}</div>
+    <div class="social"><span>${ICON.bookmark}${t.s5.save}</span><span>${ICON.send}${t.s5.share}</span></div>
+    ${bottom(`<span class="sign">${t.s5.sign}</span>`)}
+    <div class="doodle" style="right:110px;bottom:150px">${ICON.heart("#8B78E6", 110)}</div>
+    <div class="doodle" style="right:250px;bottom:250px">${ICON.sparkle("#D9782D", 64)}</div>
+    <div class="doodle" style="right:96px;bottom:300px">${ICON.sparkle("#8B78E6", 40)}</div>`
+};
+
+document.getElementById("root").innerHTML = `<section class="slide">${slides[n]()}</section>`;
+</script>
+</body>
+</html>
