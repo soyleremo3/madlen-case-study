@@ -1,5 +1,5 @@
 import "server-only";
-import { AllModelsBusyError } from "./ai";
+import { AllModelsBusyError, ClientAbortedError } from "./ai";
 
 /**
  * Best-effort per-IP rate limit. In-memory, so it is per server instance and
@@ -34,6 +34,9 @@ export const TOO_MANY = () =>
 
 /** Turn any server error into a clear, user-facing message (never leak details). */
 export function errorResponse(error: unknown) {
+  if (error instanceof ClientAbortedError) {
+    return jsonError("Request cancelled.", 499);
+  }
   if (error instanceof AllModelsBusyError) {
     return jsonError(
       "The AI is busy right now (free quota reached). Please try again in a minute.",

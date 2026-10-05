@@ -64,7 +64,7 @@ function Timeline({ flow, total, t }: { flow: LessonPlan["flow"]; total: number;
           </li>
         ))}
       </ol>
-      {sum !== total ? <p className="no-print mt-2 text-sm text-iron">Adds up to {sum} min (lesson is {total} min). Adjust as needed.</p> : null}
+      {sum !== total ? <p data-screen-only className="no-print mt-2 text-sm text-iron">Adds up to {sum} min (lesson is {total} min). Adjust as needed.</p> : null}
     </div>
   );
 }
@@ -107,7 +107,25 @@ export function LessonPrep() {
   }
 
   const t = LESSON_LABELS[meta.language];
-  const currentText = () => sheetRef.current?.innerText ?? (plan ? planToText(plan, meta, t) : "");
+  const currentText = () => {
+    const el = sheetRef.current;
+    if (!el) return plan ? planToText(plan, meta, t) : "";
+    const clone = el.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll("[data-screen-only]").forEach((n) => n.remove());
+    // innerText needs layout; textContent on a detached clone loses line breaks, so attach briefly.
+    clone.style.position = "fixed";
+    clone.style.left = "-99999px";
+    document.body.appendChild(clone);
+    const text = clone.innerText;
+    clone.remove();
+    return text;
+  };
+  const [edited, setEdited] = useState(false);
+  const regenerate = () => {
+    if (edited && !window.confirm("Make a new version? Your edits to this plan will be lost.")) return;
+    setEdited(false);
+    submit();
+  };
 
   return (
     <div className="mt-8 space-y-8">
@@ -209,7 +227,7 @@ export function LessonPrep() {
                 <Button type="button" variant="quiet" onClick={() => window.print()}>
                   Print
                 </Button>
-                <Button type="button" variant="ghost" onClick={submit} disabled={!canSubmit}>
+                <Button type="button" variant="ghost" onClick={regenerate} disabled={!canSubmit}>
                   Make another version
                 </Button>
               </div>
@@ -220,6 +238,10 @@ export function LessonPrep() {
               ref={sheetRef}
               contentEditable={editing}
               suppressContentEditableWarning
+              onInput={() => setEdited(true)}
+              role={editing ? "textbox" : undefined}
+              aria-multiline={editing ? true : undefined}
+              aria-label={editing ? "Lesson plan (editable)" : undefined}
               className={`print-area space-y-10 rounded-2xl border bg-white p-6 shadow-sheet outline-none sm:p-10 ${editing ? "border-purple ring-4 ring-purple/15" : "border-line"}`}
             >
               <header>

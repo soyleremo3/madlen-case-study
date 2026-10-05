@@ -131,7 +131,7 @@ export function StudentChat() {
           </p>
         </div>
 
-        <div ref={listRef} aria-live="polite" className="flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-6 lg:max-h-[60vh]">
+        <div ref={listRef} aria-live="polite" aria-busy={busy} className="flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-6 lg:max-h-[60vh]">
           {messages.length === 0 ? (
             <div className="mx-auto max-w-md py-8 text-center">
               <p className="font-serif text-[2rem] leading-tight">{L ? "Neyi merak ediyorsun?" : "What are you working on?"}</p>

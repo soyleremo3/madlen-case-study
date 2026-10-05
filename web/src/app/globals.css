@@ -65,9 +65,7 @@ body {
 @media print {
   .no-print { display: none !important; }
   html, body { background: #fff; }
-  /* If a page marks a print area, print only that. */
-  body:has(.print-area) * { visibility: hidden; }
-  body:has(.print-area) .print-area,
-  body:has(.print-area) .print-area * { visibility: visible; }
-  body:has(.print-area) .print-area { position: absolute; inset: 0 auto auto 0; width: 100%; }
+  /* If a page marks a print area, print only that (display:none avoids blank pages). */
+  body:has(.print-area) main *:not(.print-area):not(.print-area *):not(:has(.print-area)) { display: none !important; }
+  body:has(.print-area) .print-area { display: block !important; box-shadow: none; border: 0; }
 }

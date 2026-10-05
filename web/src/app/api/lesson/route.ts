@@ -1,7 +1,7 @@
 import { Output } from "ai";
 import { generateWithFallback } from "@/lib/ai";
 import { clientIp, errorResponse, isRateLimited, jsonError, TOO_MANY } from "@/lib/guard";
-import { lessonPlanSchema, lessonRequestSchema } from "@/lib/lesson";
+import { lessonPlanSchema, lessonRequestSchema, type LessonPlan } from "@/lib/lesson";
 import { ageForGrade, curriculumContext, languageName } from "@/lib/options";
 
 export const maxDuration = 60;
@@ -30,17 +30,21 @@ export async function POST(req: Request) {
   const { topic, subject, grade, duration, curriculum, language, notes } = parsed.data;
 
   try {
-    const { result, modelId } = await generateWithFallback({
-      instructions: INSTRUCTIONS,
-      output: Output.object({ schema: lessonPlanSchema }),
-      prompt: `Write a lesson plan.
-Topic: ${topic}
-${subject ? `Subject: ${subject}\n` : ""}Grade: ${grade} (students about ${ageForGrade(grade)} years old)
+    const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
+    const { output, modelId } = await generateWithFallback<LessonPlan>(
+      {
+        instructions: INSTRUCTIONS,
+        output: Output.object({ schema: lessonPlanSchema }),
+        prompt: `Write a lesson plan.
+Topic: ${oneLine(topic)}
+${subject ? `Subject: ${oneLine(subject)}\n` : ""}Grade: ${grade} (students about ${ageForGrade(grade)} years old)
 Lesson length: ${duration} minutes
 Curriculum context: ${curriculumContext(curriculum, grade)}
-${notes ? `Teacher's notes: """${notes}"""\n` : ""}Write the whole plan in ${languageName(language)}.`,
-    });
-    return Response.json({ plan: result.output, model: modelId });
+${notes ? `Teacher's notes: """${notes.replace(/"""/g, "'''")}"""\n` : ""}Write the whole plan in ${languageName(language)}.`,
+      },
+      req.signal,
+    );
+    return Response.json({ plan: output, model: modelId });
   } catch (error) {
     return errorResponse(error);
   }

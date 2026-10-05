@@ -13,7 +13,7 @@ export function parseHint(text: string): { hint: number | null; body: string } {
  * when the student's message looks like a practice problem, or when a hint
  * ladder is already running in this chat.
  */
-const PRACTICE_RE = /\d|[=+×÷*/^]|\b(solve|find|calculate|work out|which option|answer)\b|\b(çöz|hesapla|bul|kaç|cevab)/i;
+const PRACTICE_RE = /\d|[=+×÷*/^]|\b(solve|find|calculate|work out|which option|answer)\b|(?<!\p{L})(çöz|hesapla|bul|kaç|cevab)/iu;
 
 export function looksLikePractice(studentText: string): boolean {
   return PRACTICE_RE.test(studentText);

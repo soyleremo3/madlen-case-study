@@ -2,6 +2,8 @@ import "server-only";
 import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import {
   APICallError,
+  NoObjectGeneratedError,
+  NoOutputGeneratedError,
   RetryError,
   generateText,
   streamText,
@@ -23,8 +25,14 @@ const DEFAULT_MODELS = [
   "gemini-3.7-flash",
 ];
 
-/** Give up on one model after this long and try the next one. */
+/** Routes run with maxDuration = 60 s; stop trying new models well before that. */
+const TOTAL_BUDGET_MS = 50_000;
+/** Give up on one model after this long (generate) and try the next one. */
 const ATTEMPT_TIMEOUT_MS = 25_000;
+/** For streaming: the model must start answering within this time. */
+const FIRST_CHUNK_TIMEOUT_MS = 15_000;
+/** Don't start a new attempt with less time than this left. */
+const MIN_ATTEMPT_MS = 6_000;
 
 export function modelChain(): string[] {
   const fromEnv = process.env.KALEM_MODELS?.split(",").map((s) => s.trim()).filter(Boolean);
@@ -49,18 +57,24 @@ function providerOptionsFor(modelId: string) {
   return { google };
 }
 
-/** True when the error means "try another model" (quota, overload, transient). */
+/**
+ * True when the error means "try another model": quota (429), overload (5xx),
+ * model not available for this key (403/404), timeouts, or output that failed
+ * schema validation / came back empty.
+ */
 export function isRetryableModelError(error: unknown): boolean {
+  if (NoObjectGeneratedError.isInstance(error) || NoOutputGeneratedError.isInstance(error)) return true;
   const e = RetryError.isInstance(error) ? error.lastError : error;
   if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) return true;
   if (!APICallError.isInstance(e)) return false;
-  return e.statusCode === 429 || e.statusCode === 503 || e.statusCode === 500 || e.isRetryable;
+  const s = e.statusCode ?? 0;
+  return s === 429 || s === 403 || s === 404 || s >= 500 || e.isRetryable;
 }
 
 function describe(error: unknown): string {
   const e = RetryError.isInstance(error) ? error.lastError : error;
   if (APICallError.isInstance(e)) return `HTTP ${e.statusCode ?? "?"}: ${e.message.slice(0, 160)}`;
-  return error instanceof Error ? error.message.slice(0, 160) : String(error).slice(0, 160);
+  return error instanceof Error ? `${error.name}: ${error.message.slice(0, 160)}` : String(error).slice(0, 160);
 }
 
 export class AllModelsBusyError extends Error {
@@ -71,44 +85,76 @@ export class AllModelsBusyError extends Error {
   }
 }
 
-type GenerateArgs = Omit<Parameters<typeof generateText>[0], "model" | "maxRetries" | "providerOptions">;
+/** The client went away (Stop button, closed tab): don't fall back, just stop. */
+export class ClientAbortedError extends Error {
+  constructor() {
+    super("The request was cancelled by the client.");
+    this.name = "ClientAbortedError";
+  }
+}
 
-/** generateText with model fallback. Use with `output: Output.object(...)` for JSON. */
-export async function generateWithFallback(args: GenerateArgs) {
+function attemptSignal(controller: AbortController, external: AbortSignal | undefined, ms: number) {
+  const signals = [controller.signal, AbortSignal.timeout(ms)];
+  if (external) signals.push(external);
+  return AbortSignal.any(signals);
+}
+
+type GenerateArgs = Omit<Parameters<typeof generateText>[0], "model" | "maxRetries" | "providerOptions" | "abortSignal">;
+
+/**
+ * generateText with model fallback. Use with `output: Output.object(...)`.
+ * Returns the validated output; invalid/empty output counts as a failed attempt.
+ */
+export async function generateWithFallback<T>(args: GenerateArgs, signal?: AbortSignal): Promise<{ output: T; modelId: string }> {
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
   let lastError: unknown;
   for (const id of modelChain()) {
+    const remaining = deadline - Date.now();
+    if (remaining < MIN_ATTEMPT_MS) break;
+    const controller = new AbortController();
     try {
       const result = await generateText({
         ...args,
         model: google(id),
         maxRetries: 0,
-        abortSignal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS),
+        abortSignal: attemptSignal(controller, signal, Math.min(ATTEMPT_TIMEOUT_MS, remaining)),
         providerOptions: providerOptionsFor(id),
       } as Parameters<typeof generateText>[0]);
-      return { result, modelId: id };
+      // Reading `output` throws if it is missing (e.g. blocked by a safety filter).
+      const output = result.output as T;
+      if (output == null) throw new NoOutputGeneratedError({ message: "Empty output" });
+      return { output, modelId: id };
     } catch (error) {
+      controller.abort();
+      if (signal?.aborted) throw new ClientAbortedError();
       lastError = error;
       if (!isRetryableModelError(error)) throw error;
-      console.warn(`[ai] ${id} unavailable (${describe(lastError)}), trying next model`);
+      console.warn(`[ai] ${id} failed (${describe(error)}), trying next model`);
     }
   }
   throw new AllModelsBusyError(lastError);
 }
 
-type StreamArgs = Omit<Parameters<typeof streamText>[0], "model" | "maxRetries" | "providerOptions" | "onError">;
+type StreamArgs = Omit<Parameters<typeof streamText>[0], "model" | "maxRetries" | "providerOptions" | "onError" | "abortSignal">;
 
 /**
  * streamText with model fallback. streamText reports errors inside the stream,
- * so we read until the first real content arrives; if an error comes first and
- * it is a quota/overload error, we try the next model.
+ * so we read until the first real content arrives; if an error (or nothing)
+ * comes first and it is retryable, we abort that attempt and try the next model.
  */
-export async function streamWithFallback(args: StreamArgs) {
+export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal) {
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
   let lastError: unknown;
   for (const id of modelChain()) {
+    const remaining = deadline - Date.now();
+    if (remaining < MIN_ATTEMPT_MS) break;
+    const controller = new AbortController();
+    const abortSignal = signal ? AbortSignal.any([controller.signal, signal]) : controller.signal;
     const result = streamText({
       ...args,
       model: google(id),
       maxRetries: 0,
+      abortSignal,
       providerOptions: providerOptionsFor(id),
       onError: () => {},
     } as Parameters<typeof streamText>[0]);
@@ -117,47 +163,54 @@ export async function streamWithFallback(args: StreamArgs) {
     const buffered: TextStreamPart<ToolSet>[] = [];
     let failed: unknown = null;
 
-    const firstChunkDeadline = Date.now() + 20_000;
-    for (;;) {
-      const remaining = firstChunkDeadline - Date.now();
-      const next = await Promise.race([
-        reader.read(),
-        new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), Math.max(remaining, 0))),
-      ]);
-      if (next === "timeout") {
-        failed = Object.assign(new Error(`${id} did not start answering in time`), { name: "TimeoutError" });
-        break;
+    // One timer for the whole "wait for the first chunk" phase, always cleared.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<"timeout">((resolve) => {
+      timer = setTimeout(() => resolve("timeout"), Math.min(FIRST_CHUNK_TIMEOUT_MS, remaining));
+    });
+    try {
+      for (;;) {
+        const next = await Promise.race([reader.read(), timedOut]);
+        if (next === "timeout") {
+          failed = Object.assign(new Error(`${id} did not start answering in time`), { name: "TimeoutError" });
+          break;
+        }
+        const { value, done } = next;
+        if (done) break;
+        if (value.type === "error") {
+          failed = value.error;
+          break;
+        }
+        buffered.push(value as TextStreamPart<ToolSet>);
+        if (value.type === "text-delta" || value.type === "reasoning-delta" || value.type === "finish") break;
       }
-      const { value, done } = next;
-      if (done) break;
-      if (value.type === "error") {
-        failed = value.error;
-        break;
-      }
-      buffered.push(value as TextStreamPart<ToolSet>);
-      if (value.type === "text-delta" || value.type === "reasoning-delta" || value.type === "finish") break;
+    } finally {
+      clearTimeout(timer);
     }
 
     if (failed) {
-      lastError = failed;
+      controller.abort();
       reader.cancel().catch(() => {});
+      if (signal?.aborted) throw new ClientAbortedError();
+      lastError = failed;
       if (isRetryableModelError(failed)) {
-        console.warn(`[ai] ${id} unavailable (${describe(lastError)}), trying next model`);
+        console.warn(`[ai] ${id} failed (${describe(failed)}), trying next model`);
         continue;
       }
       throw failed;
     }
 
     const stream = new ReadableStream<TextStreamPart<ToolSet>>({
-      start(controller) {
-        for (const part of buffered) controller.enqueue(part);
+      start(c) {
+        for (const part of buffered) c.enqueue(part);
       },
-      async pull(controller) {
+      async pull(c) {
         const { value, done } = await reader.read();
-        if (done) controller.close();
-        else controller.enqueue(value as TextStreamPart<ToolSet>);
+        if (done) c.close();
+        else c.enqueue(value as TextStreamPart<ToolSet>);
       },
       cancel(reason) {
+        controller.abort();
         return reader.cancel(reason);
       },
     });

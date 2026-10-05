@@ -1,7 +1,7 @@
 import { Output } from "ai";
 import { generateWithFallback } from "@/lib/ai";
 import { clientIp, errorResponse, isRateLimited, jsonError, TOO_MANY } from "@/lib/guard";
-import { CRITERION_LABEL, CRITERIA, RUBRIC, essayFeedbackSchema, essayRequestSchema } from "@/lib/essay";
+import { CRITERION_LABEL, CRITERIA, RUBRIC, essayFeedbackSchema, essayRequestSchema, type EssayFeedback } from "@/lib/essay";
 import { ageForGrade, curriculumContext, languageName } from "@/lib/options";
 
 export const maxDuration = 60;
@@ -40,18 +40,24 @@ export async function POST(req: Request) {
   const { essay, prompt, grade, curriculum, language } = parsed.data;
 
   try {
-    const { result, modelId } = await generateWithFallback({
-      instructions: INSTRUCTIONS,
-      output: Output.object({ schema: essayFeedbackSchema }),
-      prompt: `Context: ${curriculumContext(curriculum, grade)} Students are about ${ageForGrade(grade)} years old.
+    // Neutralise tag-like text so the essay can't close its own delimiter.
+    const safeEssay = essay.replace(/<\/?essay>/gi, "");
+    const safePrompt = prompt.replace(/"""/g, "'''");
+    const { output, modelId } = await generateWithFallback<EssayFeedback>(
+      {
+        instructions: INSTRUCTIONS,
+        output: Output.object({ schema: essayFeedbackSchema }),
+        prompt: `Context: ${curriculumContext(curriculum, grade)} Students are about ${ageForGrade(grade)} years old.
 Write all feedback (reasons, next steps, notes, summary, teacher note) in ${languageName(language)}. Quotes must stay exactly as written in the essay.
-${prompt ? `The essay question/task was: """${prompt}"""` : "No essay question was given; infer the task from the essay."}
+${safePrompt ? `The essay question/task was: """${safePrompt}"""` : "No essay question was given; infer the task from the essay."}
 
 <essay>
-${essay}
+${safeEssay}
 </essay>`,
-    });
-    return Response.json({ feedback: result.output, model: modelId });
+      },
+      req.signal,
+    );
+    return Response.json({ feedback: output, model: modelId });
   } catch (error) {
     return errorResponse(error);
   }

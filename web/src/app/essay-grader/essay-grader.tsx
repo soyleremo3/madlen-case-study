@@ -29,42 +29,73 @@ import {
 } from "@/lib/essay";
 import type { Curriculum, Grade, Language } from "@/lib/options";
 
-type Note = EssayFeedback["inlineNotes"][number] & { id: number; start: number; end: number; kept: boolean };
+type Note = EssayFeedback["inlineNotes"][number] & {
+  id: number;
+  start: number;
+  end: number;
+  kept: boolean;
+  /** Why the note has no highlight: quote not in the essay, or overlapping another note. */
+  unplaced?: "not-found" | "overlap";
+};
 
-const normalise = (s: string) => s.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, " ").toLowerCase();
+/**
+ * Normalise ONE character, always to exactly one character, so indexes stay
+ * aligned (plain toLowerCase turns Turkish "İ" into two characters).
+ */
+function normChar(c: string): string {
+  if (c === "İ" || c === "I") return "i";
+  if (c === "’" || c === "‘") return "'";
+  if (c === "“" || c === "”") return '"';
+  if (/\s/.test(c)) return " ";
+  return c.toLowerCase()[0] ?? c;
+}
 
-/** Find each quote in the essay; tolerate curly quotes, whitespace and case differences. */
-function anchorNotes(essay: string, notes: EssayFeedback["inlineNotes"]): Note[] {
-  const out: Note[] = [];
-  const normEssay = normalise(essay);
-  // map normalised index -> original index
+/** Normalised text (runs of whitespace collapsed) plus a map back to original indexes. */
+function normaliseWithMap(text: string): { norm: string; map: number[] } {
+  let norm = "";
   const map: number[] = [];
-  let prevSpace = false;
-  for (let i = 0; i < essay.length; i++) {
-    const isSpace = /\s/.test(essay[i]);
-    if (isSpace && prevSpace) continue;
+  for (let i = 0; i < text.length; i++) {
+    const c = normChar(text[i]);
+    if (c === " " && norm.endsWith(" ")) continue;
+    norm += c;
     map.push(i);
-    prevSpace = isSpace;
   }
-  notes.forEach((n, idx) => {
-    let start = essay.indexOf(n.quote);
-    let end = start + n.quote.length;
+  return { norm, map };
+}
+
+/** Find each quote in the essay; tolerate curly quotes, whitespace, case and Turkish İ/I. */
+function anchorNotes(essay: string, notes: EssayFeedback["inlineNotes"]): Note[] {
+  const { norm: normEssay, map } = normaliseWithMap(essay);
+  let searchFrom = 0; // notes arrive in essay order, so repeated phrases anchor to the right occurrence
+  const out: Note[] = notes.map((n, idx) => {
+    const base = { ...n, id: idx + 1, kept: true };
+    const quote = n.quote?.trim() ?? "";
+    if (quote.length < 3) return { ...base, start: -1, end: -1, unplaced: "not-found" as const };
+    let start = essay.indexOf(quote, searchFrom);
+    if (start === -1) start = essay.indexOf(quote);
+    let end = start + quote.length;
     if (start === -1) {
-      const ni = normEssay.indexOf(normalise(n.quote).trim());
+      const nq = normaliseWithMap(quote).norm.trim();
+      const fromNorm = map.findIndex((orig) => orig >= searchFrom);
+      let ni = normEssay.indexOf(nq, Math.max(fromNorm, 0));
+      if (ni === -1) ni = normEssay.indexOf(nq);
       if (ni !== -1) {
         start = map[ni];
-        const last = map[Math.min(ni + normalise(n.quote).trim().length - 1, map.length - 1)];
-        end = last + 1;
+        end = map[Math.min(ni + nq.length - 1, map.length - 1)] + 1;
       }
     }
-    out.push({ ...n, id: idx + 1, start, end: start === -1 ? -1 : end, kept: true });
+    if (start === -1) return { ...base, start: -1, end: -1, unplaced: "not-found" as const };
+    searchFrom = end;
+    return { ...base, start, end };
   });
-  // drop overlaps (keep the first), so highlights never nest
+  // Drop overlaps (keep the first) so highlights never nest.
   const placed: Note[] = [];
   for (const n of [...out].sort((a, b) => a.start - b.start)) {
     if (n.start === -1) continue;
-    if (placed.some((p) => n.start < p.end && p.start < n.end)) n.start = n.end = -1;
-    else placed.push(n);
+    if (placed.some((p) => n.start < p.end && p.start < n.end)) {
+      n.start = n.end = -1;
+      n.unplaced = "overlap";
+    } else placed.push(n);
   }
   return out;
 }
@@ -80,7 +111,16 @@ function HighlightedEssay({ essay, notes, activeId, onPick }: { essay: string; n
       <mark
         key={n.id}
         id={`hl-${n.id}`}
+        role="button"
+        tabIndex={0}
+        aria-label={`Note ${n.id}: ${essay.slice(n.start, n.end)}`}
         onClick={() => onPick(n.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onPick(n.id);
+          }
+        }}
         className={`cursor-pointer rounded-sm px-0.5 text-ink underline decoration-2 underline-offset-4 transition-colors ${
           strength ? "bg-mint-soft decoration-mint" : "bg-purple-soft decoration-purple"
         } ${activeId === n.id ? "ring-2 ring-purple" : ""}`}
@@ -138,7 +178,7 @@ function ScoreCard({
       </div>
       <p className="mt-2 text-xs text-iron">
         {score}: {RUBRIC[criterion][score - 1]}
-        {score !== aiScore ? <> · you changed this from the AI&apos;s {aiScore}</> : null}
+        {aiScore === 0 ? <> · the AI didn&apos;t score this, so set it yourself</> : score !== aiScore ? <> · you changed this from the AI&apos;s {aiScore}</> : null}
       </p>
       <p className="mt-3 text-[0.95rem] text-ink">{reason}</p>
       <p className="mt-2 text-[0.95rem] text-iron">
@@ -222,7 +262,7 @@ export function EssayGrader() {
   return (
     <div className="mt-8 space-y-8">
       {/* Step 1: paste */}
-      <section aria-labelledby="step-paste" className="no-print grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <section aria-label="Paste the essay" className="no-print grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <Label htmlFor="essay">Student essay</Label>
@@ -367,12 +407,17 @@ export function EssayGrader() {
                             }}
                             className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-iron hover:bg-cream-deep"
                           >
-                            {n.kept ? "Remove" : "Restore"}
+                            <span className="sr-only">{n.kept ? `Remove note ${n.id}` : `Restore note ${n.id}`}</span>
+                            <span aria-hidden="true">{n.kept ? "Remove" : "Restore"}</span>
                           </button>
                         </div>
                         <blockquote className="mt-2 border-l-2 border-line pl-3 font-serif text-[1.05rem] italic text-iron">
                           &ldquo;{n.quote}&rdquo;
-                          {n.start === -1 ? <span className="ml-1 font-sans text-xs not-italic">(not found in the text)</span> : null}
+                          {n.unplaced ? (
+                            <span className="ml-1 font-sans text-xs not-italic">
+                              {n.unplaced === "overlap" ? "(overlaps another note)" : "(not found in the text)"}
+                            </span>
+                          ) : null}
                         </blockquote>
                         <p className="mt-2 text-[0.95rem] text-ink">{n.note}</p>
                         {n.example ? (
@@ -418,13 +463,20 @@ export function EssayGrader() {
               </label>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {!approved ? (
-                  <Button type="button" onClick={() => setApproved(true)} disabled={!summary.trim()}>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setApproved(true);
+                      requestAnimationFrame(() => document.getElementById("copy-for-student")?.focus());
+                    }}
+                    disabled={!summary.trim()}
+                  >
                     Approve feedback
                   </Button>
                 ) : (
                   <>
                     <DraftBadge approved />
-                    <CopyButton text={shareText} label="Copy for the student" variant="primary" />
+                    <CopyButton id="copy-for-student" text={shareText} label="Copy for the student" variant="primary" />
                     <Button type="button" variant="quiet" onClick={() => window.print()}>
                       Print
                     </Button>

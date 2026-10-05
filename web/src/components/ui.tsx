@@ -145,19 +145,34 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 }
 
 /** `text` may be a function so the value is read at click time (e.g. after the user edits). */
-export function CopyButton({ text, label = "Copy", variant = "quiet" }: { text: string | (() => string); label?: string; variant?: ButtonProps["variant"] }) {
-  const [done, setDone] = useState(false);
+export function CopyButton({
+  text,
+  label = "Copy",
+  variant = "quiet",
+  id,
+}: {
+  text: string | (() => string);
+  label?: string;
+  variant?: ButtonProps["variant"];
+  id?: string;
+}) {
+  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
   return (
     <Button
+      id={id}
       type="button"
       variant={variant}
       onClick={async () => {
-        await navigator.clipboard.writeText(typeof text === "function" ? text() : text);
-        setDone(true);
-        setTimeout(() => setDone(false), 1800);
+        try {
+          await navigator.clipboard.writeText(typeof text === "function" ? text() : text);
+          setState("done");
+        } catch {
+          setState("failed");
+        }
+        setTimeout(() => setState("idle"), 2200);
       }}
     >
-      <span aria-live="polite">{done ? "Copied" : label}</span>
+      <span aria-live="polite">{state === "done" ? "Copied" : state === "failed" ? "Couldn't copy: select the text instead" : label}</span>
     </Button>
   );
 }
