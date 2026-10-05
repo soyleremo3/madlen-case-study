@@ -36,7 +36,7 @@ export const LEVEL_LABEL = ["", "Needs work", "Developing", "Secure", "Exceeding
 // Field order matters: the model writes the evidence-based reason BEFORE choosing the score.
 const criterionResult = z.object({
   criterion: z.enum(CRITERIA),
-  reason: z.string().describe("1–2 sentences: which descriptor level the essay matches for this criterion and why, pointing to evidence in the essay"),
+  reason: z.string().describe("1–2 sentences that start with the evidence (e.g. 'Clear position in the first paragraph, but…'), explaining which descriptor level fits. Do not restate the score or the criterion name."),
   score: z.number().int().min(1).max(4).describe("1 Needs work, 2 Developing, 3 Secure, 4 Exceeding: the descriptor level named in the reason"),
   nextStep: z.string().describe("One concrete, doable action the student should take to move up a level"),
 });

@@ -112,10 +112,11 @@ function ScoreCard({
 }) {
   return (
     <div className="rounded-2xl border border-line bg-white p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="font-semibold">{CRITERION_LABEL[criterion]}</h3>
-        <p className="text-sm text-iron">
-          <span className="font-serif text-3xl text-ink">{score}</span>/4 · {LEVEL_LABEL[score]}
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-semibold leading-snug">{CRITERION_LABEL[criterion]}</h3>
+        <p className="shrink-0 text-right text-sm leading-tight text-iron">
+          <span className="font-serif text-3xl text-ink">{score}</span>/4
+          <span className="block">{LEVEL_LABEL[score]}</span>
         </p>
       </div>
       <div role="radiogroup" aria-label={`${CRITERION_LABEL[criterion]} score`} className="mt-3 grid grid-cols-4 gap-1.5">
