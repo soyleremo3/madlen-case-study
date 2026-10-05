@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/*
+  Kalem design tokens. Palette follows madlen.io so the prototype feels at home
+  next to Madlen. Colour carries meaning:
+  orange = the teacher's actions, purple = the AI's voice (drafts, suggestions).
+*/
+@theme {
+  --color-paper: #faf8f5;
+  --color-cream: #fdf5ef;
+  --color-cream-deep: #fae7d7;
+  --color-sand: #f4cba8;
+  --color-ink: #1f2937;
+  --color-iron: #70645e;
+  --color-line: rgb(112 100 94 / 0.16);
+  --color-orange: #d37e24;
+  --color-orange-deep: #9a5818;
+  --color-purple: #9078dc;
+  --color-purple-deep: #5f48c2;
+  --color-purple-soft: #efebfb;
+  --color-mint: #047857;
+  --color-mint-soft: #e3f5ee;
+  --color-alert: #b42318;
+  --color-alert-soft: #fdecea;
+
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-sans: var(--font-instrument-sans), system-ui, sans-serif;
+
+  --shadow-sheet: 0 1px 2px rgb(112 100 94 / 0.08), 0 8px 28px rgb(112 100 94 / 0.10);
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+::selection {
+  background: var(--color-purple-soft);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  html, body { background: #fff; }
+}
