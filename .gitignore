@@ -1,0 +1,20 @@
+# Secrets — never commit API keys
+.env
+.env.*
+!.env.example
+
+# Dependencies / build
+node_modules/
+.next/
+out/
+dist/
+.vercel/
+
+# Case brief from Madlen (confidential, keep local)
+*.pdf
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
