@@ -15,6 +15,17 @@ export const lessonRequestSchema = z.object({
 export type LessonRequest = z.infer<typeof lessonRequestSchema>;
 
 export const BLOOM = ["Remember", "Understand", "Apply", "Analyse", "Evaluate", "Create"] as const;
+export type Bloom = (typeof BLOOM)[number];
+
+/** Bloom level names as Turkish teachers know them (revised taxonomy). */
+export const BLOOM_TR: Record<Bloom, string> = {
+  Remember: "Hatırlama",
+  Understand: "Anlama",
+  Apply: "Uygulama",
+  Analyse: "Analiz",
+  Evaluate: "Değerlendirme",
+  Create: "Yaratma",
+};
 
 export const lessonPlanSchema = z.object({
   isAppropriate: z.boolean().describe("false if the topic is not a legitimate school topic for this age (e.g. harmful or adult content)"),
@@ -25,7 +36,9 @@ export const lessonPlanSchema = z.object({
       z.object({
         text: z.string().describe("Measurable objective starting with an observable action verb, e.g. 'Explain how…' (never 'understand' or 'know')"),
         level: z.enum(BLOOM),
-        successCriteria: z.string().describe("Student-facing success criterion starting with 'I can…' (or '…yapabilirim' in Turkish)"),
+        successCriteria: z
+          .string()
+          .describe("Student-facing success criterion in the plan's language. English: 'I can …'. Turkish: a sentence ending in '…yapabilirim' / '…edebilirim' with NO English words (never write 'I can')."),
       }),
     )
     .describe("1–2 objectives only (a single lesson cannot cover more). If 2, the second is higher-order (Analyse/Evaluate/Create)."),
@@ -72,15 +85,15 @@ export const EXAMPLES = [
 ];
 
 export const LESSON_LABELS = {
-  en: { grade: "Grade", min: "min", minutes: "minutes", bigIdea: "Big idea", objectives: "Objectives", byEnd: "By the end of the lesson, students will be able to:", prior: "Before we start", concepts: "Key concepts", flow: "Lesson flow", check: "Check", slides: "Slides", slide: "Slide", visual: "Visual idea", discussion: "Discussion questions", misconceptions: "Watch out for", exit: "Exit ticket", support: "Extra support", stretch: "Stretch" },
-  tr: { grade: "Sınıf", min: "dk", minutes: "dakika", bigIdea: "Temel fikir", objectives: "Öğrenme çıktıları", byEnd: "Ders sonunda öğrenciler:", prior: "Ön bilgi ve ısınma", concepts: "Anahtar kavramlar", flow: "Ders akışı", check: "Kontrol", slides: "Slaytlar", slide: "Slayt", visual: "Görsel fikri", discussion: "Tartışma soruları", misconceptions: "Kavram yanılgıları", exit: "Çıkış bileti", support: "Destekleme", stretch: "Zenginleştirme" },
+  en: { gradeLine: (g: string) => `Grade ${g}`, bloom: (b: Bloom) => b as string, min: "min", minutes: "minutes", bigIdea: "Big idea", objectives: "Objectives", byEnd: "By the end of the lesson, students will be able to:", prior: "Before we start", concepts: "Key concepts", flow: "Lesson flow", check: "Check", slides: "Slides", slide: "Slide", visual: "Visual idea", discussion: "Discussion questions", misconceptions: "Watch out for", exit: "Exit ticket", support: "Extra support", stretch: "Stretch" },
+  tr: { gradeLine: (g: string) => `${g}. sınıf`, bloom: (b: Bloom) => BLOOM_TR[b] ?? b, min: "dk", minutes: "dakika", bigIdea: "Temel fikir", objectives: "Öğrenme çıktıları", byEnd: "Ders sonunda öğrenciler:", prior: "Ön bilgi ve ısınma", concepts: "Anahtar kavramlar", flow: "Ders akışı", check: "Kontrol", slides: "Slaytlar", slide: "Slayt", visual: "Görsel fikri", discussion: "Tartışma soruları", misconceptions: "Kavram yanılgıları", exit: "Çıkış bileti", support: "Destekleme", stretch: "Zenginleştirme" },
 } as const;
 export type LessonLabels = (typeof LESSON_LABELS)["en"] | (typeof LESSON_LABELS)["tr"];
 
 export function planToText(p: LessonPlan, meta: { grade: string; duration: string; curriculum: string }, t: LessonLabels = LESSON_LABELS.en): string {
   const L: string[] = [];
-  L.push(`# ${p.title}`, `${t.grade} ${meta.grade} · ${meta.duration} ${t.min} · ${meta.curriculum}`, "", `${t.bigIdea}: ${p.bigIdea}`, "", `## ${t.objectives}`);
-  p.objectives.forEach((o) => L.push(`- ${o.text} (${o.level}). ${o.successCriteria}`));
+  L.push(`# ${p.title}`, `${t.gradeLine(meta.grade)} · ${meta.duration} ${t.min} · ${meta.curriculum}`, "", `${t.bigIdea}: ${p.bigIdea}`, "", `## ${t.objectives}`);
+  p.objectives.forEach((o) => L.push(`- ${o.text} (${t.bloom(o.level)}). ${o.successCriteria}`));
   L.push("", `${t.prior}: ${p.priorKnowledge}`);
   L.push("", `## ${t.concepts}`);
   p.keyConcepts.forEach((k) => L.push(`- ${k.term}: ${k.meaning}`));

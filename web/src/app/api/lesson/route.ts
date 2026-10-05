@@ -40,7 +40,7 @@ Topic: ${oneLine(topic)}
 ${subject ? `Subject: ${oneLine(subject)}\n` : ""}Grade: ${grade} (students about ${ageForGrade(grade)} years old)
 Lesson length: ${duration} minutes
 Curriculum context: ${curriculumContext(curriculum, grade)}
-${notes ? `Teacher's notes: """${notes.replace(/"""/g, "'''")}"""\n` : ""}Write the whole plan in ${languageName(language)}.`,
+${notes ? `Teacher's notes: """${notes.replace(/"""/g, "'''")}"""\n` : ""}Write the whole plan in ${languageName(language)}${language === "tr" ? " only: every field, including success criteria (no English words such as 'I can')" : ""}.`,
       },
       req.signal,
     );

@@ -246,7 +246,7 @@ export function LessonPrep() {
             >
               <header>
                 <p className="text-sm text-iron">
-                  {t.grade} {meta.grade} · {meta.duration} {t.minutes} · {meta.curriculum}
+                  {t.gradeLine(meta.grade)} · {meta.duration} {t.minutes} · {meta.curriculum}
                 </p>
                 <h2 className="mt-1 font-serif text-[2.4rem] leading-[1.05] sm:text-[3rem]">{plan.title}</h2>
                 <p className="mt-3 max-w-3xl text-lg text-ink">
@@ -261,7 +261,7 @@ export function LessonPrep() {
                   <ul className="space-y-3">
                     {plan.objectives.map((o, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <span className="mt-0.5 shrink-0 rounded-full bg-purple-soft px-2.5 py-0.5 text-xs font-semibold text-purple-deep">{o.level}</span>
+                        <span className="mt-0.5 shrink-0 rounded-full bg-purple-soft px-2.5 py-0.5 text-xs font-semibold text-purple-deep">{t.bloom(o.level)}</span>
                         <span>
                           {o.text}
                           {o.successCriteria ? <span className="mt-0.5 block text-[0.92rem] italic text-iron">{o.successCriteria}</span> : null}
