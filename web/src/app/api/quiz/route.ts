@@ -2,7 +2,7 @@ import { Output } from "ai";
 import { generateWithFallback } from "@/lib/ai";
 import { clientIp, errorResponse, isRateLimited, jsonError, TOO_MANY } from "@/lib/guard";
 import { msg } from "@/lib/messages";
-import { ageForGrade, curriculumContext, languageName } from "@/lib/options";
+import { curriculumContext, gradeDescription, languageName } from "@/lib/options";
 import { quizRequestSchema, quizSchema, type Quiz } from "@/lib/quiz";
 
 export const maxDuration = 60;
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         instructions: INSTRUCTIONS,
         output: Output.object({ schema: quizSchema }),
         prompt: `Lesson: ${title.replace(/\s+/g, " ")}
-Grade: ${grade} (students about ${ageForGrade(grade)} years old)
+Grade: ${gradeDescription(grade)}
 Curriculum context: ${curriculumContext(curriculum, grade)}
 Objectives:
 ${list(objectives)}

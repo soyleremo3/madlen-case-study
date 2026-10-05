@@ -49,3 +49,22 @@ export function ageForGrade(grade: Grade): string {
   const g = Number(grade);
   return `${g + 5}–${g + 6}`;
 }
+
+/** School stages as in Türkiye's 4+4+4 system. */
+export type Stage = "primary" | "middle" | "high";
+export const STAGES: { stage: Stage; grades: Grade[] }[] = [
+  { stage: "primary", grades: ["1", "2", "3", "4"] },
+  { stage: "middle", grades: ["5", "6", "7", "8"] },
+  { stage: "high", grades: ["9", "10", "11", "12"] },
+];
+
+export function stageOf(grade: Grade): Stage {
+  const g = Number(grade);
+  return g <= 4 ? "primary" : g <= 8 ? "middle" : "high";
+}
+
+/** For prompts: "grade 7, middle school (ortaokul), students about 12–13 years old". */
+export function gradeDescription(grade: Grade): string {
+  const stage = { primary: "primary school (ilkokul)", middle: "middle school (ortaokul)", high: "high school (lise)" }[stageOf(grade)];
+  return `grade ${grade}, ${stage}, students about ${ageForGrade(grade)} years old`;
+}

@@ -29,7 +29,7 @@ import {
   type EssayFeedback,
 } from "@/lib/essay";
 import type { Curriculum, Grade, Language } from "@/lib/options";
-import { gradeOptionsFor, useUi } from "@/lib/i18n";
+import { gradeGroupsFor, useUi } from "@/lib/i18n";
 
 type Note = EssayFeedback["inlineNotes"][number] & {
   id: number;
@@ -301,7 +301,7 @@ export function EssayGrader() {
         <div className="space-y-4">
           <div>
             <Label htmlFor="grade">{ui.grade}</Label>
-            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptionsFor(uiLang)} />
+            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} groups={gradeGroupsFor(uiLang)} />
           </div>
           <div>
             <Label htmlFor="language">{E.feedbackLang}</Label>

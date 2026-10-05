@@ -19,7 +19,7 @@ import {
   postJson,
 } from "@/components/ui";
 import { DURATIONS, LESSON_LABELS, planToText, type LessonLabels, type LessonPlan } from "@/lib/lesson";
-import { gradeOptionsFor, useUi } from "@/lib/i18n";
+import { gradeGroupsFor, useUi } from "@/lib/i18n";
 import { curriculumLabel, type Curriculum, type Grade, type Language } from "@/lib/options";
 import { QuizPanel, type PrintTarget } from "./quiz-panel";
 
@@ -187,7 +187,7 @@ export function LessonPrep() {
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <div>
             <Label htmlFor="grade">{ui.grade}</Label>
-            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptionsFor(uiLang)} />
+            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} groups={gradeGroupsFor(uiLang)} />
           </div>
           <div>
             <Label htmlFor="duration">{L.length}</Label>

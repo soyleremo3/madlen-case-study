@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { curriculumSchema, gradeSchema, languageSchema } from "./options";
+import { stageName } from "./stage-name";
 
 export const DURATIONS = ["30", "40", "45", "60", "80"] as const;
 
@@ -85,8 +86,8 @@ export const EXAMPLES = [
 ];
 
 export const LESSON_LABELS = {
-  en: { gradeLine: (g: string) => `Grade ${g}`, bloom: (b: Bloom) => b as string, min: "min", minutes: "minutes", bigIdea: "Big idea", objectives: "Objectives", byEnd: "By the end of the lesson, students will be able to:", prior: "Before we start", concepts: "Key concepts", flow: "Lesson flow", check: "Check", slides: "Slides", slide: "Slide", visual: "Visual idea", discussion: "Discussion questions", misconceptions: "Watch out for", exit: "Exit ticket", support: "Extra support", stretch: "Stretch", sumWarning: (sum: number, total: number) => `Adds up to ${sum} min (lesson is ${total} min). Adjust as needed.` },
-  tr: { gradeLine: (g: string) => `${g}. sınıf`, bloom: (b: Bloom) => BLOOM_TR[b] ?? b, min: "dk", minutes: "dakika", bigIdea: "Temel fikir", objectives: "Öğrenme çıktıları", byEnd: "Ders sonunda öğrenciler:", prior: "Ön bilgi ve ısınma", concepts: "Anahtar kavramlar", flow: "Ders akışı", check: "Kontrol", slides: "Slaytlar", slide: "Slayt", visual: "Görsel fikri", discussion: "Tartışma soruları", misconceptions: "Kavram yanılgıları", exit: "Çıkış bileti", support: "Destekleme", stretch: "Zenginleştirme", sumWarning: (sum: number, total: number) => `Toplam ${sum} dk (ders ${total} dk). Gerekirse ayarlayın.` },
+  en: { gradeLine: (g: string) => `${stageName(g, "en")} · Grade ${g}`, bloom: (b: Bloom) => b as string, min: "min", minutes: "minutes", bigIdea: "Big idea", objectives: "Objectives", byEnd: "By the end of the lesson, students will be able to:", prior: "Before we start", concepts: "Key concepts", flow: "Lesson flow", check: "Check", slides: "Slides", slide: "Slide", visual: "Visual idea", discussion: "Discussion questions", misconceptions: "Watch out for", exit: "Exit ticket", support: "Extra support", stretch: "Stretch", sumWarning: (sum: number, total: number) => `Adds up to ${sum} min (lesson is ${total} min). Adjust as needed.` },
+  tr: { gradeLine: (g: string) => `${stageName(g, "tr")} · ${g}. sınıf`, bloom: (b: Bloom) => BLOOM_TR[b] ?? b, min: "dk", minutes: "dakika", bigIdea: "Temel fikir", objectives: "Öğrenme çıktıları", byEnd: "Ders sonunda öğrenciler:", prior: "Ön bilgi ve ısınma", concepts: "Anahtar kavramlar", flow: "Ders akışı", check: "Kontrol", slides: "Slaytlar", slide: "Slayt", visual: "Görsel fikri", discussion: "Tartışma soruları", misconceptions: "Kavram yanılgıları", exit: "Çıkış bileti", support: "Destekleme", stretch: "Zenginleştirme", sumWarning: (sum: number, total: number) => `Toplam ${sum} dk (ders ${total} dk). Gerekirse ayarlayın.` },
 } as const;
 export type LessonLabels = (typeof LESSON_LABELS)["en"] | (typeof LESSON_LABELS)["tr"];
 

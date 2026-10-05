@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useSyncExternalStore, type ReactNode } from "react";
-import { GRADES } from "./options";
+import { STAGES } from "./options";
+import { STAGE_NAMES } from "./stage-name";
 import { UI_LANG_KEY as STORAGE_KEY, type UiLang } from "./ui-lang";
 
 export type { UiLang };
@@ -12,7 +13,7 @@ const EN = {
   switchAria: "Change language",
   forTeachers: "For teachers",
   forStudents: "For students",
-  grade: "Grade",
+  grade: "School level / grade",
   gradeOption: (g: string) => `Grade ${g}`,
   curriculum: "Curriculum",
   moreOptions: "More options",
@@ -169,7 +170,7 @@ const TR: Dict = {
   switchAria: "Dili değiştir",
   forTeachers: "Öğretmenler için",
   forStudents: "Öğrenciler için",
-  grade: "Sınıf",
+  grade: "Kademe / sınıf",
   gradeOption: (g) => `${g}. sınıf`,
   curriculum: "Öğretim programı",
   moreOptions: "Daha fazla seçenek",
@@ -372,8 +373,12 @@ export function useUi() {
   return { lang, setLang, t: DICT[lang] };
 }
 
-export function gradeOptionsFor(lang: UiLang) {
-  return GRADES.map((g) => ({ value: g, label: DICT[lang].gradeOption(g) }));
+/** Grade options grouped by school stage (İlkokul / Ortaokul / Lise). */
+export function gradeGroupsFor(lang: UiLang) {
+  return STAGES.map((s) => ({
+    label: STAGE_NAMES[lang][s.stage],
+    options: s.grades.map((g) => ({ value: g, label: DICT[lang].gradeOption(g) })),
+  }));
 }
 
 /** The UI language, for sending to the server with requests. */

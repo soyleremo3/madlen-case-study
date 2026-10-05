@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Chip, Label, Select, TextInput, languageOptions } from "@/components/ui";
-import { DICT, currentUiLang, gradeOptionsFor, useUi } from "@/lib/i18n";
+import { DICT, currentUiLang, gradeGroupsFor, useUi } from "@/lib/i18n";
 import { MAX_MESSAGE_CHARS, MAX_USER_MESSAGES, QUICK_ACTIONS, STARTERS, parseHint, visibleHints } from "@/lib/chat";
 import type { Grade, Language } from "@/lib/options";
 
@@ -99,7 +99,7 @@ export function StudentChat() {
       <aside className="space-y-4 rounded-2xl border border-line bg-white p-5 shadow-sheet lg:self-start">
         <div>
           <Label htmlFor="grade">{C.myGrade}</Label>
-          <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptionsFor(uiLang)} />
+          <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} groups={gradeGroupsFor(uiLang)} />
         </div>
         <div>
           <Label htmlFor="subject" hint={ui.optional}>{C.studying}</Label>

@@ -34,24 +34,39 @@ export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
   return <textarea {...props} className={`${fieldBase} leading-relaxed ${props.className ?? ""}`} />;
 }
 
+type Option = { value: string; label: string };
+
 export function Select({
   id,
   value,
   onChange,
-  options,
+  options = [],
+  groups,
 }: {
   id: string;
   value: string;
   onChange: (v: string) => void;
-  options: readonly { value: string; label: string }[];
+  options?: readonly Option[];
+  /** Grouped options rendered as <optgroup> (e.g. İlkokul / Ortaokul / Lise). */
+  groups?: readonly { label: string; options: readonly Option[] }[];
 }) {
   return (
     <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className={`${fieldBase} appearance-none bg-[length:12px] bg-[right_14px_center] bg-no-repeat pr-9`} style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2370645e' stroke-width='1.6'/%3E%3C/svg%3E\")" }}>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
+      {groups
+        ? groups.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </optgroup>
+          ))
+        : options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
     </select>
   );
 }

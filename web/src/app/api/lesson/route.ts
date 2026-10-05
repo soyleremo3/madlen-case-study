@@ -3,7 +3,7 @@ import { generateWithFallback } from "@/lib/ai";
 import { clientIp, errorResponse, isRateLimited, jsonError, TOO_MANY } from "@/lib/guard";
 import { msg } from "@/lib/messages";
 import { lessonPlanSchema, lessonRequestSchema, type LessonPlan } from "@/lib/lesson";
-import { ageForGrade, curriculumContext, languageName } from "@/lib/options";
+import { curriculumContext, gradeDescription, languageName } from "@/lib/options";
 
 export const maxDuration = 60;
 
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         output: Output.object({ schema: lessonPlanSchema }),
         prompt: `Write a lesson plan.
 Topic: ${oneLine(topic)}
-${subject ? `Subject: ${oneLine(subject)}\n` : ""}Grade: ${grade} (students about ${ageForGrade(grade)} years old)
+${subject ? `Subject: ${oneLine(subject)}\n` : ""}Grade: ${gradeDescription(grade)}
 Lesson length: ${duration} minutes
 Curriculum context: ${curriculumContext(curriculum, grade)}
 ${notes ? `Teacher's notes: """${notes.replace(/"""/g, "'''")}"""\n` : ""}Write the whole plan in ${languageName(language)}${language === "tr" ? " only: every field, including success criteria (no English words such as 'I can')" : ""}.`,

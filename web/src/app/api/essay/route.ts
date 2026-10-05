@@ -3,7 +3,7 @@ import { generateWithFallback } from "@/lib/ai";
 import { clientIp, errorResponse, isRateLimited, jsonError, TOO_MANY } from "@/lib/guard";
 import { msg } from "@/lib/messages";
 import { CRITERION_LABEL, CRITERIA, RUBRIC, essayFeedbackSchema, essayRequestSchema, type EssayFeedback } from "@/lib/essay";
-import { ageForGrade, curriculumContext, languageName } from "@/lib/options";
+import { curriculumContext, gradeDescription, languageName } from "@/lib/options";
 
 export const maxDuration = 60;
 
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       {
         instructions: INSTRUCTIONS,
         output: Output.object({ schema: essayFeedbackSchema }),
-        prompt: `Context: ${curriculumContext(curriculum, grade)} Students are about ${ageForGrade(grade)} years old.
+        prompt: `Context: ${curriculumContext(curriculum, grade)} The writer is in ${gradeDescription(grade)}.
 Write all feedback (reasons, next steps, notes, summary, teacher note) in ${languageName(language)}. Quotes must stay exactly as written in the essay.
 ${safePrompt ? `The essay question/task was: """${safePrompt}"""` : "No essay question was given; infer the task from the essay."}
 
