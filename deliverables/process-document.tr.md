@@ -21,7 +21,7 @@ Tek sitede üç araç: Ders hazırlığı, Çalışma asistanı ve Kompozisyon d
 - **Müfredat derinliği:** araçlar Maarif Modeli terimlerini kullanıyor ama kazanım kodu uydurmuyor. Sıradaki: Madlen'in veritabanından gerçek kazanım eşleştirmesi.
 
 ## Bilinçli UI/UX kararları
-- **Son söz her zaman öğretmende.** Her yapay zekâ çıktısında "YZ taslağı" etiketi var. Kompozisyon geri bildirimi ancak "Geri bildirimi onayla"dan sonra kopyalanıp yazdırılabiliyor; her puan ve not düzenlenebiliyor. Bu, Madlen'in kendi duruşunu ve MEB'in insan gözetimi ilkesini yansıtıyor.
+- **Son söz her zaman öğretmende.** Öğretmene yönelik her yapay zekâ çıktısında (ders planı, quiz, kompozisyon geri bildirimi) "YZ taslağı" etiketi var. Kompozisyon geri bildirimi ancak "Geri bildirimi onayla"dan sonra kopyalanıp yazdırılabiliyor; her puan ve not düzenlenebiliyor. Bu, Madlen'in kendi duruşunu ve MEB'in insan gözetimi ilkesini yansıtıyor.
 - **Renklerin anlamı var.** Turuncu öğretmenin eylemlerini, mor yapay zekânın sesini gösteriyor; kenar boşluğundaki ikinci bir kalem gibi. Kompozisyon notları ilgili cümlenin hemen yanında duruyor. Renkler Madlen markasına yakın; turuncu metinler WCAG AA kontrastını geçmek için daha koyu bir ton kullanıyor.
 - **Hızlı ilk kullanım.** Yalnızca konu ve sınıf zorunlu; örnek konu çipleri ve "Örnek kompozisyonla dene" düğmesi var. Yüklenirken boş bir döner simge yerine adım adım ne yapıldığı gösteriliyor.
 - **Cevap değil öğrenme.** Çalışma asistanı alıştırma sorularında 4 adımlı ipucu merdiveni kullanıyor, yazma ödevlerinde hazır metin yerine taslak veriyor ve öğrenci kendine zarar vermekten söz ederse güvendiği bir yetişkine ve 112'ye yönlendiren sabit bir mesajla cevap veriyor.
