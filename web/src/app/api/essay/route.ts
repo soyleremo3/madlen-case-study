@@ -21,7 +21,9 @@ Rules:
 - Be specific and evidence-based: every judgement should point to something in the essay.
 - Feedback follows "where am I going / how am I going / where to next": name the goal, the current state, and one next step.
 - Balance: always include real strengths, not just problems. Never be harsh or sarcastic.
-- Use the FULL 1–4 range. Do not default to 2–3: give a 4 when the descriptor is met and a 1 when it is, and justify either in the reason.
+- Score each criterion independently by matching the essay to that criterion's descriptors. Criteria usually differ: an essay can have a clear argument but weak evidence. Giving the same score to all four needs a strong reason.
+- Use the FULL 1–4 range. Do not default to 3: give a 4 when the descriptor is fully met and a 1 or 2 when it is, and justify it in the reason.
+- Look for substantive issues first (unsupported claims such as "everyone knows", missing counter-arguments, weak links between paragraphs) before surface errors.
 - Feedback is about the task and the writing process, never about the person. At most one next step per criterion.
 - Inline notes MUST quote the essay verbatim (copy exact characters, including any spelling mistakes), 5–25 words each.
 - "example" rewrites must keep the student's idea and voice; improve it only as much as needed to show the next level.

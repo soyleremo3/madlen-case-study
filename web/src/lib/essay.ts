@@ -33,10 +33,11 @@ export const RUBRIC: Record<CriterionKey, [string, string, string, string]> = {
 
 export const LEVEL_LABEL = ["", "Needs work", "Developing", "Secure", "Exceeding"] as const;
 
+// Field order matters: the model writes the evidence-based reason BEFORE choosing the score.
 const criterionResult = z.object({
   criterion: z.enum(CRITERIA),
-  score: z.number().int().min(1).max(4).describe("1 Needs work, 2 Developing, 3 Secure, 4 Exceeding, judged against the grade level"),
-  reason: z.string().describe("1–2 sentences explaining the score, pointing to evidence in the essay"),
+  reason: z.string().describe("1–2 sentences: which descriptor level the essay matches for this criterion and why, pointing to evidence in the essay"),
+  score: z.number().int().min(1).max(4).describe("1 Needs work, 2 Developing, 3 Secure, 4 Exceeding: the descriptor level named in the reason"),
   nextStep: z.string().describe("One concrete, doable action the student should take to move up a level"),
 });
 
@@ -53,7 +54,7 @@ export const essayFeedbackSchema = z.object({
         example: z.string().describe("For 'improve': a model rewrite of the passage. For 'strength': a short phrase naming what works. Same language as the essay."),
       }),
     )
-    .describe("4–7 notes anchored to exact quotes, ordered as they appear in the essay. Include at least one strength."),
+    .describe("5–7 notes anchored to exact quotes, ordered as they appear in the essay. Cover at least 3 different criteria. Include at least one strength and at least one note on argument or evidence (e.g. an unsupported claim), not only spelling."),
   studentSummary: z
     .string()
     .describe("3–4 warm, specific sentences addressed to the student ('you'): one strength, the most important thing to improve, and one next step. No score, no name."),

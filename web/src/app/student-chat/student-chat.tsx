@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Chip, Label, Select, TextInput, gradeOptions, languageOptions } from "@/components/ui";
-import { MAX_MESSAGE_CHARS, MAX_USER_MESSAGES, QUICK_ACTIONS, STARTERS, parseHint } from "@/lib/chat";
+import { MAX_MESSAGE_CHARS, MAX_USER_MESSAGES, QUICK_ACTIONS, STARTERS, parseHint, visibleHints } from "@/lib/chat";
 import type { Grade, Language } from "@/lib/options";
 
 /** Tiny, safe renderer: **bold** and line breaks only. */
@@ -83,6 +83,8 @@ export function StudentChat() {
   }
 
   const L = language === "tr";
+  const texts = messages.map((m) => ({ role: m.role, text: m.parts.map((p) => (p.type === "text" ? p.text : "")).join("") }));
+  const hints = visibleHints(texts);
 
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[17rem_1fr]">
@@ -144,8 +146,8 @@ export function StudentChat() {
             </div>
           ) : null}
 
-          {messages.map((m) => {
-            const text = m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+          {messages.map((m, idx) => {
+            const text = texts[idx].text;
             if (m.role === "user") {
               return (
                 <div key={m.id} className="flex justify-end">
@@ -153,7 +155,8 @@ export function StudentChat() {
                 </div>
               );
             }
-            const { hint, body } = parseHint(text);
+            const hint = hints[idx];
+            const body = parseHint(text).body;
             return (
               <div key={m.id} className="max-w-[92%] border-l-4 border-purple pl-4">
                 {hint ? (
