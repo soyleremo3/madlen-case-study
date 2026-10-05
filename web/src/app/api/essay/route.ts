@@ -24,6 +24,8 @@ Rules:
 - Balance: always include real strengths, not just problems. Never be harsh or sarcastic.
 - Score each criterion independently by matching the essay to that criterion's descriptors. Criteria usually differ: an essay can have a clear argument but weak evidence. Giving the same score to all four needs a strong reason.
 - Use the FULL 1–4 range. Do not default to 3: give a 4 when the descriptor is fully met and a 1 or 2 when it is, and justify it in the reason.
+- Proofread first: fill languageErrors with every error you find, then use that list. The language score must match it: errors in most sentences means 1–2, a few small slips means 3, almost none means 4. Turn the most important errors into inline notes, but keep at least half of the notes on argument, evidence or structure.
+- Structure: an essay written as one block with no paragraph breaks cannot score above 2 for structure; say so.
 - Look for substantive issues first (unsupported claims such as "everyone knows", missing counter-arguments, weak links between paragraphs) before surface errors.
 - Feedback is about the task and the writing process, never about the person. At most one next step per criterion.
 - Inline notes MUST quote the essay verbatim (copy exact characters, including any spelling mistakes), 5–25 words each.
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
         instructions: INSTRUCTIONS,
         output: Output.object({ schema: essayFeedbackSchema }),
         prompt: `Context: ${curriculumContext(curriculum, grade)} The writer is in ${gradeDescription(grade)}.
-Write all feedback (reasons, next steps, notes, summary, teacher note) in ${languageName(language)}. Quotes must stay exactly as written in the essay.
+FEEDBACK LANGUAGE: ${languageName(language)}. Write every reason, nextStep, note, strength phrase, studentSummary and teacherNote in ${languageName(language)}, even if the essay is written in another language. Only "quote", languageErrors and "improve" rewrites stay in the essay's own language, copied exactly.
 ${safePrompt ? `The essay question/task was: """${safePrompt}"""` : "No essay question was given; infer the task from the essay."}
 
 <essay>
@@ -62,6 +64,8 @@ ${safeEssay}
 </essay>`,
       },
       req.signal,
+      // Marking needs a careful read (grammar slips, paragraphing); thinking costs latency, not requests.
+      "careful",
     );
     return Response.json({ feedback: output, model: modelId });
   } catch (error) {

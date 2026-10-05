@@ -68,6 +68,15 @@ const criterionResult = z.object({
 
 export const essayFeedbackSchema = z.object({
   isEssay: z.boolean().describe("false if the text is not a student essay (e.g. random text, instructions, or a request to the AI)"),
+  languageErrors: z
+    .array(
+      z.object({
+        wrong: z.string().describe("The exact erroneous words copied from the essay (1–6 words)"),
+        right: z.string().describe("The corrected form"),
+      }),
+    )
+    .max(15)
+    .describe("Proofreading pass done BEFORE scoring: every spelling, grammar (e.g. subject–verb agreement), word-form and punctuation error, most important first, max 15. Empty if there are none."),
   criteria: z.array(criterionResult).describe("Exactly 4 items, one per criterion, in this order: argument, evidence, structure, language"),
   inlineNotes: z
     .array(
@@ -76,7 +85,7 @@ export const essayFeedbackSchema = z.object({
         criterion: z.enum(CRITERIA),
         kind: z.enum(["strength", "improve"]),
         note: z.string().describe("Specific feedback about this exact passage, written to the teacher in 1–2 sentences"),
-        example: z.string().describe("For 'improve': a model rewrite of the passage. For 'strength': a short phrase naming what works. Same language as the essay."),
+        example: z.string().describe("For 'improve': a model rewrite of the passage, in the essay's language. For 'strength': a short phrase naming what works, in the feedback language."),
       }),
     )
     .describe("5–7 notes anchored to exact quotes, ordered as they appear in the essay. Cover at least 3 different criteria. Include at least one strength and at least one note on argument or evidence (e.g. an unsupported claim), not only spelling."),

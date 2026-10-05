@@ -144,6 +144,7 @@ function ScoreCard({
   aiScore,
   reason,
   nextStep,
+  errors = [],
   onScore,
 }: {
   criterion: CriterionKey;
@@ -151,6 +152,8 @@ function ScoreCard({
   aiScore: number;
   reason: string;
   nextStep: string;
+  /** Proofreading list, shown on the language card so the teacher sees every slip, not only the noted ones. */
+  errors?: { wrong: string; right: string }[];
   onScore: (s: number) => void;
 }) {
   const { lang, t } = useUi();
@@ -190,6 +193,18 @@ function ScoreCard({
         <span className="font-semibold text-purple-deep">{t.essay.nextStep} </span>
         {nextStep}
       </p>
+      {errors.length > 0 ? (
+        <details className="mt-3 text-[0.95rem]">
+          <summary className="cursor-pointer font-semibold text-ink">{t.essay.errorsFound(errors.length)}</summary>
+          <ul className="mt-2 space-y-1">
+            {errors.map((e, i) => (
+              <li key={i}>
+                <span className="text-iron line-through">{e.wrong}</span> → <span className="font-semibold text-mint">{e.right}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      ) : null}
     </div>
   );
 }
@@ -379,6 +394,7 @@ export function EssayGrader() {
                       aiScore={aiScore(k)}
                       reason={c?.reason ?? ""}
                       nextStep={c?.nextStep ?? ""}
+                      errors={k === "language" ? (feedback.languageErrors ?? []) : undefined}
                       onScore={(s) => {
                         setScores((prev) => ({ ...prev, [k]: s }));
                         setApproved(false);
