@@ -1,28 +1,26 @@
-# Kalem: process document
+# Process document
 
-**Live app:** kalem-case-study.vercel.app · **Code:** github.com/soyleremo3/madlen-case-study
-Three tools in one site: Lesson prep, Study helper and Essay feedback. It is named "Kalem" and labelled as a case-study prototype, so it is never mistaken for an official Madlen product.
+Live app: kalem-case-study.vercel.app
+Code: github.com/soyleremo3/madlen-case-study
+I called the prototype "Kalem" so it would not be mistaken for an official Madlen product.
 
-## AI tools: what I used and for what
-- **Claude Code (Claude Opus)** was my main build partner. I used it to research Madlen and competitors in a built-in browser, plan, write all the code (Next.js 16, Vercel AI SDK, Tailwind), design and iterate prompts, and write test scripts.
-- **Claude sub-agents** did focused jobs in parallel. Before building, three research agents covered pedagogy (hint ladders, MEB rubric levels, backward design), tech (they verified the new AI SDK v7 API against Context7 docs and typechecked snippets) and a UX benchmark of MagicSchool, Brisk, Khanmigo and Madlen. Before deploying, an independent read-only review agent audited the code.
-- **Google Gemini API (free tier)** powers the app. I use Flash Lite models through one server module with a fallback chain, so switching to Madlen's own provider means changing one line.
-- **Canva AI** was tried for the Instagram carousel (see below).
+## Which AI tools did I use, and for what?
+I built almost everything with Claude Code (Claude Opus). I used it to research Madlen and its competitors, plan the work, write the Next.js code, write and test the prompts, and check the results. For bigger questions I ran separate Claude agents in parallel. One covered teaching research (hint ladders, MEB rubric levels), one checked the AI SDK documentation, and one compared the UX of MagicSchool, Brisk and Khanmigo. A final agent reviewed the finished code. The app itself runs on Google's Gemini API (free tier). I also tried Canva AI for the Instagram post.
 
-## Where I switched tools, and why
-- **Web fetching → built-in browser.** Help centres (Khanmigo, MagicSchool) blocked plain fetching or hid answers in collapsed sections. A real browser could read them.
-- **Canva AI → code-rendered carousel.** Canva returned single-page designs, dropped the mascot, replaced my Turkish copy with English filler and printed a wrong formula. HTML/CSS rendered by headless Chrome gave exact copy, real brand assets and 5 slides.
-- **Gemini Flash → Flash Lite first.** On test day Flash returned "503 high demand" and has only 20 free requests a day. Lite models come first now, with a 25 s timeout per model and a 50 s total budget.
+## Where did I switch tools, and why?
+- Canva AI to code. Canva returned single-page designs, replaced my Turkish text with English filler and printed a wrong formula. I built the carousel in HTML/CSS instead and exported it with Chrome.
+- Plain web requests to a real browser. The Khanmigo and MagicSchool help centres blocked automated requests, so I read them in a browser.
+- Gemini Flash to Flash Lite. On test day Flash returned "high demand" errors, and it only allows 20 free requests a day. Flash Lite now runs first and Flash is the backup.
 
-## What is still rough, and what I would fix next
-- **Free-tier limits:** about 500 requests a day. Google may use free-tier data, so I tested only with synthetic essays. Next: Madlen's EU-hosted, KVKK-compliant infrastructure.
-- **Model quality:** small models sometimes miss grammar slips or repeat a score. I added a proofreading pass before scoring and a full-range scoring rule, and the teacher always reviews. Next: a calibration set of marked essays.
-- **No accounts or saving yet.** Plans and feedback live in the browser session. Next: saving, plus sending a quiz straight to a class. That is Madlen's "connected loop".
-- **Curriculum depth:** the tools use MEB Maarif terminology but never invent outcome codes. Next: real outcome mapping from Madlen's database.
+## What is still rough, and what would I fix next?
+- The free API tier allows about 500 requests a day, and Google may use free-tier data. Because of that I only tested with made-up essays. A real version would run on Madlen's EU-hosted infrastructure.
+- The small model sometimes misses a grammar slip or gives similar scores across criteria. I added a proofreading step and scoring rules. Next I would test it against essays that teachers have already marked.
+- There are no accounts and nothing is saved. Next would be saving plans and sending a quiz straight to a class.
+- The tools use Maarif terminology but are not mapped to real learning-outcome codes. That needs Madlen's curriculum data.
 
-## Deliberate UI/UX decisions
-- **The teacher is always in control.** Every teacher-facing AI output (lesson plan, quiz, essay feedback) carries an "AI draft" badge. Essay feedback can be copied or printed only after "Approve feedback", and every score and note is editable. This mirrors Madlen's own stance and the MEB human-oversight rule.
-- **Colour has meaning.** Orange marks teacher actions and purple marks the AI's voice, like a second pen in the margin. Essay notes sit next to the exact sentence they refer to. The colours are close to Madlen's brand; orange text uses a darker shade to pass WCAG AA contrast.
-- **Fast first use.** Only topic and grade are required, with example chips and a "Try a sample essay" button. Loading shows named steps instead of a bare spinner.
-- **Learning over answers.** The Study helper uses a 4-step hint ladder for practice questions, gives an outline instead of a ready-made essay for writing tasks, and replies with a fixed message pointing to a trusted adult and 112 if a student writes about self-harm.
-- **Turkish-first and built for real use.** There is a TR/EN interface and grades are grouped by İlkokul, Ortaokul and Lise. Errors say what to do next ("daily limit reached, resets at 10:00"). It works at phone width and with a keyboard only.
+## What UI/UX decisions did I make, and why?
+- The teacher stays in control. Lesson plans, quizzes and essay feedback are labelled as AI drafts, and every score and note can be edited. Essay feedback can only be copied after the teacher approves it. This follows Madlen's own position and MEB's human-oversight rule.
+- Each colour has one meaning. Orange is for the teacher's actions and purple is for the AI's suggestions. Essay notes sit next to the sentence they refer to, like comments in the margin.
+- First use takes seconds. Only topic and grade are required, and each tool has examples to try.
+- The Study helper is built for learning. On practice problems it gives hints before the answer. On writing tasks it gives an outline instead of a finished essay. If a student mentions self-harm, it gives a fixed reply that points them to a trusted adult.
+- It fits Turkish classrooms. The interface works in Turkish and English, and grades are grouped as İlkokul, Ortaokul and Lise. Error messages say what to do next.

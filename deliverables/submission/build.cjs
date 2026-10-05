@@ -29,8 +29,8 @@ function mdToHtml(md) {
 
 const chrome = process.env.CHROME || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const builds = [
-  { page: "submission.html", process: "process-document.md", pdf: "madlen-case-study-submission.pdf" },
-  { page: "submission.tr.html", process: "process-document.tr.md", pdf: "madlen-case-study-submission-tr.pdf" },
+  { page: "submission.html", process: "process-document.md", pdf: "Emrullah-Soyler-Madlen-Case-Study.pdf" },
+  { page: "submission.tr.html", process: "process-document.tr.md", pdf: "Emrullah-Soyler-Madlen-Case-Study-TR.pdf" },
 ];
 
 for (const b of builds) {
