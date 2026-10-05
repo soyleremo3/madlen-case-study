@@ -40,8 +40,11 @@ export function modelChain(): string[] {
 }
 
 /** Keep latency low; thinking level names differ per model family. */
-/** "fast" for chat and drafts; "careful" where correctness matters more than speed (quiz answer keys). */
-export type Effort = "fast" | "careful";
+/**
+ * "fast" for drafts; "balanced" for the tutor, which must solve the problem before giving hints
+ * (minimal thinking got "3x + 5 = 20" wrong live); "careful" where correctness matters most (quiz keys, marking).
+ */
+export type Effort = "fast" | "balanced" | "careful";
 
 function providerOptionsFor(modelId: string, effort: Effort = "fast") {
   const google: GoogleLanguageModelOptions = {
@@ -56,7 +59,7 @@ function providerOptionsFor(modelId: string, effort: Effort = "fast") {
     ],
   };
   if (/^gemini-3\.(8|7|6)-flash$/.test(modelId)) google.thinkingConfig = { thinkingLevel: effort === "careful" ? "medium" : "low" };
-  if (modelId === "gemini-3.5-flash-lite") google.thinkingConfig = { thinkingLevel: effort === "careful" ? "medium" : "minimal" };
+  if (modelId === "gemini-3.5-flash-lite") google.thinkingConfig = { thinkingLevel: ({ fast: "minimal", balanced: "low", careful: "medium" } as const)[effort] };
   return { google };
 }
 
@@ -184,7 +187,7 @@ type StreamArgs = Omit<Parameters<typeof streamText>[0], "model" | "maxRetries" 
  * so we read until the first real content arrives; if an error (or nothing)
  * comes first and it is retryable, we abort that attempt and try the next model.
  */
-export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal) {
+export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal, effort: Effort = "fast") {
   const deadline = Date.now() + TOTAL_BUDGET_MS;
   const failures: unknown[] = [];
   for (const id of modelChain()) {
@@ -197,7 +200,7 @@ export async function streamWithFallback(args: StreamArgs, signal?: AbortSignal)
       model: google(id),
       maxRetries: 0,
       abortSignal,
-      providerOptions: providerOptionsFor(id),
+      providerOptions: providerOptionsFor(id, effort),
       onError: () => {},
     } as Parameters<typeof streamText>[0]);
 

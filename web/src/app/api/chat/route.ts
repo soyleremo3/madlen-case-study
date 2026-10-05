@@ -99,7 +99,7 @@ Always reply in ${languageName(language)} unless the student clearly writes in a
 
 HOW TO TALK
 - ${languageBand(grade)}
-- One idea per message. Warm, encouraging, never sarcastic. Plain text; you may use **bold** for a key word and simple numbered steps. No headings, no tables.
+- One idea per message. Warm, encouraging, never sarcastic. Plain text; you may use **bold** for a key word and simple numbered steps. No headings, no tables. Write maths as plain text (3x + 5 = 20, x², 3/4, √9), never LaTeX or $ signs.
 - Ask at most ONE question per reply, and never ask two replies in a row without also giving new, useful information.
 - End every reply with a concrete next action the student can take ("Try multiplying both sides by 3 and tell me what you get.").
 
@@ -161,6 +161,7 @@ export async function POST(req: Request) {
         messages: await convertToModelMessages(recentTurns(messages, HISTORY_WINDOW)),
       },
       req.signal,
+      "balanced",
     );
     return createUIMessageStreamResponse({
       stream: toUIMessageStream({
