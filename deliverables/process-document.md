@@ -1,6 +1,6 @@
 # Kalem: process document
 
-**Live app:** [LIVE URL] · **Code:** github.com/soyleremo3/madlen-case-study
+**Live app:** kalem-case-study.vercel.app · **Code:** github.com/soyleremo3/madlen-case-study
 Three tools in one site: Lesson prep, Study helper and Essay feedback. It is named "Kalem" and labelled as a case-study prototype, so it is never mistaken for an official Madlen product.
 
 ## AI tools: what I used and for what

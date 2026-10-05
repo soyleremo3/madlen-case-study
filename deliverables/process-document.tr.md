@@ -1,6 +1,6 @@
 # Kalem: süreç dokümanı
 
-**Canlı uygulama:** [LIVE URL] · **Kod:** github.com/soyleremo3/madlen-case-study
+**Canlı uygulama:** kalem-case-study.vercel.app · **Kod:** github.com/soyleremo3/madlen-case-study
 Tek sitede üç araç: Ders hazırlığı, Çalışma asistanı ve Kompozisyon değerlendirme. Adı "Kalem" ve vaka çalışması prototipi olarak etiketli; böylece resmi bir Madlen ürünüyle karıştırılmıyor.
 
 ## Yapay zekâ araçları: neyi, ne için kullandım
