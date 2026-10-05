@@ -13,7 +13,11 @@
   --color-ink: #1f2937;
   --color-iron: #70645e;
   --color-line: rgb(112 100 94 / 0.16);
+  /* #d37e24 is Madlen's orange: use it for fills/accents only.
+     White on it is 3.1:1 (fails WCAG AA), so buttons and orange text use
+     --color-orange-ink (#a85d16, white text 4.9:1). */
   --color-orange: #d37e24;
+  --color-orange-ink: #a85d16;
   --color-orange-deep: #9a5818;
   --color-purple: #9078dc;
   --color-purple-deep: #5f48c2;
@@ -61,4 +65,9 @@ body {
 @media print {
   .no-print { display: none !important; }
   html, body { background: #fff; }
+  /* If a page marks a print area, print only that. */
+  body:has(.print-area) * { visibility: hidden; }
+  body:has(.print-area) .print-area,
+  body:has(.print-area) .print-area * { visibility: visible; }
+  body:has(.print-area) .print-area { position: absolute; inset: 0 auto auto 0; width: 100%; }
 }

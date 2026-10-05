@@ -22,9 +22,9 @@ export const TOOLS: Tool[] = [
   },
   {
     slug: "student-chat",
-    name: "Study buddy",
+    name: "Study helper",
     forWho: "For students",
-    summary: "Ask about a topic and get answers at your grade level. Stuck on a practice question? Get a hint, not the answer.",
+    summary: "Ask about a topic and get answers at your grade level. Stuck on a practice problem? Get a hint, one step at a time.",
     gives: [
       "Explanations pitched at your grade",
       "Step-by-step hints for practice questions",

@@ -23,7 +23,7 @@ function MarginNoteDemo() {
         </span>
       </figcaption>
       <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
-        <span className="rounded-full bg-orange px-4 py-2 font-semibold text-white">
+        <span className="rounded-full bg-orange-ink px-4 py-2 font-semibold text-white">
           Keep note
         </span>
         <span className="rounded-full border border-line px-4 py-2 text-iron">
@@ -82,7 +82,7 @@ export default function Home() {
                     ))}
                   </ul>
                 </div>
-                <span className="self-center justify-self-start rounded-full bg-ink px-5 py-2.5 text-[0.95rem] font-semibold text-paper transition-colors group-hover:bg-orange sm:justify-self-end">
+                <span className="self-center justify-self-start rounded-full bg-ink px-5 py-2.5 text-[0.95rem] font-semibold text-paper transition-colors group-hover:bg-orange-ink sm:justify-self-end">
                   Open {tool.name.toLowerCase()}
                 </span>
               </Link>
