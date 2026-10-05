@@ -10,7 +10,7 @@ I built almost everything with Claude Code (Claude Opus). I used it to research 
 ## Where did I switch tools, and why?
 I tried Canva AI first for the Instagram post. It returned single-page designs, replaced my Turkish text with English filler and printed a wrong formula, so I built the slides in HTML/CSS and exported them with Chrome. In the app I started with Gemini Flash, but on test day it returned "high demand" errors, and its free tier allows only 20 requests a day. Flash Lite now runs first, with Flash as the backup.
 
-## What is still rough or unfinished, and what would I fix next?
+## What would I fix next?
 The three tools work on their own. Lesson plans, quizzes and essay reviews are not saved, and a quiz cannot be sent to a class yet. Next I would connect them, so a teacher can plan a lesson, send the quiz to students and see the results in one place. That is the connected loop at the centre of Madlen's UVP.
 
 ## What UI/UX decisions did I make, and why?
