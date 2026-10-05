@@ -14,15 +14,14 @@ import {
   TextArea,
   TextInput,
   curriculumOptions,
-  gradeOptions,
   languageOptions,
   postJson,
 } from "@/components/ui";
-import { DURATIONS, EXAMPLES, LESSON_LABELS, planToText, type LessonLabels, type LessonPlan } from "@/lib/lesson";
+import { DURATIONS, LESSON_LABELS, planToText, type LessonLabels, type LessonPlan } from "@/lib/lesson";
+import { gradeOptionsFor, useUi } from "@/lib/i18n";
 import { curriculumLabel, type Curriculum, type Grade, type Language } from "@/lib/options";
 import { QuizPanel, type PrintTarget } from "./quiz-panel";
 
-const durationOptions = DURATIONS.map((d) => ({ value: d, label: `${d} minutes` }));
 
 const PHASE_TINTS = ["bg-orange", "bg-purple", "bg-[#c99a5b]", "bg-[#7f6fc4]", "bg-[#b9772f]", "bg-[#a596e4]"];
 
@@ -65,18 +64,23 @@ function Timeline({ flow, total, t }: { flow: LessonPlan["flow"]; total: number;
           </li>
         ))}
       </ol>
-      {sum !== total ? <p data-screen-only className="no-print mt-2 text-sm text-iron">Adds up to {sum} min (lesson is {total} min). Adjust as needed.</p> : null}
+      {sum !== total ? <p data-screen-only className="no-print mt-2 text-sm text-iron">{t.sumWarning(sum, total)}</p> : null}
     </div>
   );
 }
 
 export function LessonPrep() {
+  const { lang: uiLang, t: ui } = useUi();
+  const L = ui.lesson;
+  const durationOptions = DURATIONS.map((d) => ({ value: d, label: L.minutesOpt(d) }));
   const [topic, setTopic] = useState("");
   const [subject, setSubject] = useState("");
   const [grade, setGrade] = useState<Grade>("7");
   const [duration, setDuration] = useState<(typeof DURATIONS)[number]>("40");
   const [curriculum, setCurriculum] = useState<Curriculum>("maarif");
-  const [language, setLanguage] = useState<Language>("en");
+  // Output language follows the UI language until the teacher picks one.
+  const [languageChoice, setLanguage] = useState<Language | null>(null);
+  const language: Language = languageChoice ?? uiLang;
   const [notes, setNotes] = useState("");
   const [moreOpen, setMoreOpen] = useState(false);
 
@@ -116,7 +120,7 @@ export function LessonPrep() {
       setMeta({ grade, duration, curriculum: curriculumLabel(curriculum), curriculumKey: curriculum, language });
       requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setError(e instanceof Error ? e.message : ui.genericError);
     } finally {
       setLoading(false);
     }
@@ -138,7 +142,7 @@ export function LessonPrep() {
   };
   const [edited, setEdited] = useState(false);
   const regenerate = () => {
-    if (edited && !window.confirm("Make a new version? Your edits to this plan will be lost.")) return;
+    if (edited && !window.confirm(L.confirmDiscard)) return;
     setEdited(false);
     submit();
   };
@@ -152,83 +156,81 @@ export function LessonPrep() {
           if (canSubmit) submit();
         }}
       >
-        <Label htmlFor="topic">What are you teaching?</Label>
+        <Label htmlFor="topic">{L.whatTeaching}</Label>
         <TextInput
           id="topic"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g. Photosynthesis, Fractions on a number line, The Ottoman Empire"
+          placeholder={L.topicPh}
           className="text-lg"
           autoComplete="off"
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-sm text-iron">Try:</span>
-          {EXAMPLES.map((ex) => (
+          <span className="text-sm text-iron">{L.tryLabel}</span>
+          {L.examples.map((ex) => (
             <Chip
               key={ex.topic}
               onClick={() => {
                 setTopic(ex.topic);
                 setSubject(ex.subject);
-                setGrade(ex.grade);
+                setGrade(ex.grade as Grade);
               }}
             >
-              {ex.topic}, grade {ex.grade}
+              {L.exampleChip(ex.topic, ex.grade)}
             </Chip>
           ))}
         </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-3">
           <div>
-            <Label htmlFor="grade">Grade</Label>
-            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptions} />
+            <Label htmlFor="grade">{ui.grade}</Label>
+            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptionsFor(uiLang)} />
           </div>
           <div>
-            <Label htmlFor="duration">Lesson length</Label>
+            <Label htmlFor="duration">{L.length}</Label>
             <Select id="duration" value={duration} onChange={(v) => setDuration(v as (typeof DURATIONS)[number])} options={durationOptions} />
           </div>
           <div>
-            <Label htmlFor="language">Plan language</Label>
+            <Label htmlFor="language">{L.planLang}</Label>
             <Select id="language" value={language} onChange={(v) => setLanguage(v as Language)} options={languageOptions} />
           </div>
         </div>
 
         <button type="button" aria-expanded={moreOpen} onClick={() => setMoreOpen((o) => !o)} className="mt-4 text-sm font-semibold text-orange-ink underline-offset-4 hover:underline">
-          {moreOpen ? "Fewer options" : "More options"}
+          {moreOpen ? ui.fewerOptions : ui.moreOptions}
         </button>
         {moreOpen ? (
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <Label htmlFor="subject" hint="(optional)">Subject</Label>
-              <TextInput id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Science" />
+              <Label htmlFor="subject" hint={ui.optional}>{L.subject}</Label>
+              <TextInput id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={L.subjectPh} />
             </div>
             <div>
-              <Label htmlFor="curriculum">Curriculum</Label>
+              <Label htmlFor="curriculum">{ui.curriculum}</Label>
               <Select id="curriculum" value={curriculum} onChange={(v) => setCurriculum(v as Curriculum)} options={curriculumOptions} />
             </div>
             <div className="sm:col-span-2">
-              <Label htmlFor="notes" hint="(optional)">Anything else?</Label>
-              <TextArea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="e.g. Mixed-ability class, two students learning Turkish, include a hands-on activity" />
+              <Label htmlFor="notes" hint={ui.optional}>{L.anything}</Label>
+              <TextArea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder={L.anythingPh} />
             </div>
           </div>
         ) : null}
 
         <div className="mt-6">
           <Button type="submit" disabled={!canSubmit}>
-            {loading ? "Planning…" : "Plan my lesson"}
+            {loading ? L.submitting : L.submit}
           </Button>
         </div>
       </form>
 
       <div ref={resultRef} className="scroll-mt-24">
-        {loading ? <LoadingSteps steps={["Setting objectives and the big idea", "Timing the lesson flow", "Building 5 slides with visual ideas", "Writing discussion questions"]} /> : null}
+        {loading ? <LoadingSteps steps={L.steps} /> : null}
         {error ? <ErrorNote message={error} onRetry={canSubmit ? submit : undefined} /> : null}
         {!loading && !error && !plan ? (
-          <EmptyState title="Your lesson plan appears here">
-            Type a topic, pick a grade, and press <strong>Plan my lesson</strong>. Everything in the plan can be edited before you use it.
-          </EmptyState>
+          <EmptyState title={L.emptyTitle}>{L.emptyBody}</EmptyState>
         ) : null}
         {plan && !plan.isAppropriate ? (
-          <ErrorNote message="This topic doesn't look suitable for a school lesson at this grade. Try rephrasing it as a classroom topic." />
+          <ErrorNote message={L.notAppropriate} />
         ) : null}
 
         {plan && plan.isAppropriate ? (
@@ -237,18 +239,18 @@ export function LessonPrep() {
               <DraftBadge />
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant={editing ? "primary" : "quiet"} onClick={() => setEditing((e) => !e)} aria-pressed={editing}>
-                  {editing ? "Done editing" : "Edit plan"}
+                  {editing ? L.doneEditing : L.editPlan}
                 </Button>
-                <CopyButton text={currentText} label="Copy plan" />
+                <CopyButton text={currentText} label={L.copyPlan} />
                 <Button type="button" variant="quiet" onClick={() => printAs("plan")}>
-                  Print
+                  {ui.print}
                 </Button>
                 <Button type="button" variant="ghost" onClick={regenerate} disabled={!canSubmit}>
-                  Make another version
+                  {L.another}
                 </Button>
               </div>
             </div>
-            {editing ? <p className="no-print text-sm text-iron">Click any text in the plan to change it. Copy and Print use your edited version.</p> : null}
+            {editing ? <p className="no-print text-sm text-iron">{L.editHint}</p> : null}
 
             <div
               ref={sheetRef}
@@ -257,7 +259,7 @@ export function LessonPrep() {
               onInput={() => setEdited(true)}
               role={editing ? "textbox" : undefined}
               aria-multiline={editing ? true : undefined}
-              aria-label={editing ? "Lesson plan (editable)" : undefined}
+              aria-label={editing ? L.editPlan : undefined}
               className={`${printTarget === "plan" ? "print-area" : ""} space-y-10 rounded-2xl border bg-white p-6 shadow-sheet outline-none sm:p-10 ${editing ? "border-purple ring-4 ring-purple/15" : "border-line"}`}
             >
               <header>

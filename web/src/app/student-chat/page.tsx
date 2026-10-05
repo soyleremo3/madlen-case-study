@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageIntro } from "@/components/ui";
+import { ToolIntro } from "@/components/home-content";
 import { StudentChat } from "./student-chat";
 
 export const metadata: Metadata = {
@@ -10,10 +10,7 @@ export const metadata: Metadata = {
 export default function StudentChatPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <PageIntro forWho="For students" title="Study helper">
-        Ask about anything you&apos;re learning. Explanations match your grade. Practice problems get hints, one step at a
-        time, so the answer is yours.
-      </PageIntro>
+      <ToolIntro tool="chat" />
       <StudentChat />
     </div>
   );

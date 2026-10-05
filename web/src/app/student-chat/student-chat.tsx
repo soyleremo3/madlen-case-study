@@ -3,7 +3,8 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Chip, Label, Select, TextInput, gradeOptions, languageOptions } from "@/components/ui";
+import { Button, Chip, Label, Select, TextInput, languageOptions } from "@/components/ui";
+import { DICT, currentUiLang, gradeOptionsFor, useUi } from "@/lib/i18n";
 import { MAX_MESSAGE_CHARS, MAX_USER_MESSAGES, QUICK_ACTIONS, STARTERS, parseHint, visibleHints } from "@/lib/chat";
 import type { Grade, Language } from "@/lib/options";
 
@@ -42,18 +43,25 @@ function friendlyError(error: Error | undefined): string {
     const parsed = JSON.parse(error.message);
     if (parsed?.error) return parsed.error;
   } catch {}
-  return "Something went wrong. Please try sending your message again.";
+  return DICT[currentUiLang()].genericError;
 }
 
 export function StudentChat() {
+  const { lang: uiLang, t: ui } = useUi();
+  const C = ui.chat;
   const [grade, setGrade] = useState<Grade>("7");
   const [subject, setSubject] = useState("");
-  const [language, setLanguage] = useState<Language>("en");
+  // Chat language follows the UI language until the student picks one.
+  const [languageChoice, setLanguage] = useState<Language | null>(null);
+  const language: Language = languageChoice ?? uiLang;
   const [input, setInput] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat", headers: () => ({ "x-ui-lang": currentUiLang() }) }),
+    [],
+  );
   const { messages, sendMessage, status, error, stop, setMessages, clearError } = useChat({ transport });
 
   const busy = status === "submitted" || status === "streaming";
@@ -82,7 +90,7 @@ export function StudentChat() {
     } else send(text);
   }
 
-  const L = language === "tr";
+  const L = uiLang === "tr";
   const texts = messages.map((m) => ({ role: m.role, text: m.parts.map((p) => (p.type === "text" ? p.text : "")).join("") }));
   const hints = visibleHints(texts);
 
@@ -90,20 +98,20 @@ export function StudentChat() {
     <div className="mt-8 grid gap-6 lg:grid-cols-[17rem_1fr]">
       <aside className="space-y-4 rounded-2xl border border-line bg-white p-5 shadow-sheet lg:self-start">
         <div>
-          <Label htmlFor="grade">My grade</Label>
-          <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptions} />
+          <Label htmlFor="grade">{C.myGrade}</Label>
+          <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptionsFor(uiLang)} />
         </div>
         <div>
-          <Label htmlFor="subject" hint="(optional)">What are you studying?</Label>
-          <TextInput id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Maths: equations" maxLength={80} />
+          <Label htmlFor="subject" hint={ui.optional}>{C.studying}</Label>
+          <TextInput id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={C.studyingPh} maxLength={80} />
         </div>
         <div>
-          <Label htmlFor="language">Language</Label>
+          <Label htmlFor="language">{C.language}</Label>
           <Select id="language" value={language} onChange={(v) => setLanguage(v as Language)} options={languageOptions} />
         </div>
         <div className="rounded-xl bg-cream p-3.5 text-sm text-iron">
-          <p className="font-semibold text-ink">How it helps</p>
-          <p className="mt-1">Questions about ideas get a clear explanation. Practice problems get hints, one step at a time, so you learn to solve them yourself.</p>
+          <p className="font-semibold text-ink">{C.howTitle}</p>
+          <p className="mt-1">{C.howBody}</p>
         </div>
         {messages.length ? (
           <Button
@@ -116,15 +124,15 @@ export function StudentChat() {
               clearError();
             }}
           >
-            Start a new chat
+            {C.newChat}
           </Button>
         ) : null}
       </aside>
 
-      <section aria-label="Chat" className="flex min-h-[34rem] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sheet">
+      <section aria-label={C.chatAria} className="flex min-h-[34rem] flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sheet">
         <div className="flex items-center justify-between gap-3 border-b border-line bg-cream/60 px-5 py-3 text-sm">
           <p className="text-iron">
-            <span className="font-semibold text-ink">AI study helper.</span> I can make mistakes, so check with your teacher.
+            <span className="font-semibold text-ink">{C.banner}</span> {C.bannerNote}
           </p>
           <p className="shrink-0 text-iron">
             {userCount}/{MAX_USER_MESSAGES}
@@ -212,7 +220,7 @@ export function StudentChat() {
             }}
           >
             <label htmlFor="chat-input" className="sr-only">
-              Your message
+              {C.inputLabel}
             </label>
             <textarea
               id="chat-input"
@@ -233,15 +241,15 @@ export function StudentChat() {
             />
             {busy ? (
               <Button type="button" variant="quiet" onClick={() => stop()}>
-                Stop
+                {C.stop}
               </Button>
             ) : (
               <Button type="submit" disabled={!input.trim() || atLimit}>
-                Send
+                {C.send}
               </Button>
             )}
           </form>
-          <p className="mt-2 text-xs text-iron">Don&apos;t share personal details like your full name, school or address.</p>
+          <p className="mt-2 text-xs text-iron">{C.privacy}</p>
         </div>
       </section>
     </div>

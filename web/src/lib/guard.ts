@@ -1,5 +1,6 @@
 import "server-only";
 import { AllModelsBusyError, ClientAbortedError } from "./ai";
+import { msg } from "./messages";
 
 /**
  * Best-effort per-IP rate limit. In-memory, so it is per server instance and
@@ -29,20 +30,12 @@ export function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
 }
 
-export const TOO_MANY = () =>
-  jsonError("You're going a bit fast. Wait a minute, then try again.", 429);
+export const TOO_MANY = (req: Request) => jsonError(msg(req, "tooMany"), 429);
 
 /** Turn any server error into a clear, user-facing message (never leak details). */
-export function errorResponse(error: unknown) {
-  if (error instanceof ClientAbortedError) {
-    return jsonError("Request cancelled.", 499);
-  }
-  if (error instanceof AllModelsBusyError) {
-    return jsonError(
-      "The AI is busy right now (free quota reached). Please try again in a minute.",
-      503,
-    );
-  }
+export function errorResponse(error: unknown, req: Request) {
+  if (error instanceof ClientAbortedError) return jsonError(msg(req, "cancelled"), 499);
+  if (error instanceof AllModelsBusyError) return jsonError(msg(req, "busy"), 503);
   console.error("[api] unexpected error", error);
-  return jsonError("Something went wrong on our side. Please try again.", 500);
+  return jsonError(msg(req, "generic"), 500);
 }

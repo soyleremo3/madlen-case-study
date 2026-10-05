@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 import { streamWithFallback } from "@/lib/ai";
 import { clientIp, errorResponse, isRateLimited, jsonError, TOO_MANY } from "@/lib/guard";
+import { msg } from "@/lib/messages";
 import { ageForGrade, gradeSchema, languageName, languageSchema, type Grade } from "@/lib/options";
 import { CRISIS_REPLY, FILTERED_NOTE, MAX_MESSAGE_CHARS, MAX_USER_MESSAGES, isCrisisMessage } from "@/lib/chat";
 
@@ -127,26 +128,26 @@ SAFETY (the user is a child or teenager)
 }
 
 export async function POST(req: Request) {
-  if (isRateLimited(`chat:${clientIp(req)}`, 20)) return TOO_MANY();
+  if (isRateLimited(`chat:${clientIp(req)}`, 20)) return TOO_MANY(req);
 
   const body = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
-  if (!parsed.success) return jsonError("Please check your message and try again.", 400);
+  if (!parsed.success) return jsonError(msg(req, "checkForm"), 400);
   const { grade, subject, language } = parsed.data;
   const messages = toTextOnly(parsed.data.messages);
 
   const userMessages = messages.filter((m) => m.role === "user");
   if (userMessages.length === 0 || messages.at(-1)?.role !== "user") {
-    return jsonError("Please type a message first.", 400);
+    return jsonError(msg(req, "typeFirst"), 400);
   }
   if (userMessages.length > MAX_USER_MESSAGES) {
-    return jsonError("This chat is long enough. Start a new chat to keep going.", 400);
+    return jsonError(msg(req, "chatLong"), 400);
   }
   const textOf = (m: UIMessage) => m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
   const lastText = textOf(userMessages.at(-1)!);
-  if (lastText.length > MAX_MESSAGE_CHARS) return jsonError("That message is too long. Please shorten it.", 400);
+  if (lastText.length > MAX_MESSAGE_CHARS) return jsonError(msg(req, "messageLong"), 400);
   if (messages.reduce((n, m) => n + textOf(m).length, 0) > MAX_TOTAL_CHARS) {
-    return jsonError("This chat is long enough. Start a new chat to keep going.", 400);
+    return jsonError(msg(req, "chatLong"), 400);
   }
   if (isCrisisMessage(lastText)) return fixedReply(CRISIS_REPLY[language]);
 
@@ -166,6 +167,6 @@ export async function POST(req: Request) {
       }),
     });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 }

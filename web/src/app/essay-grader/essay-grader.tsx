@@ -13,7 +13,6 @@ import {
   TextArea,
   TextInput,
   curriculumOptions,
-  gradeOptions,
   languageOptions,
   postJson,
 } from "@/components/ui";
@@ -21,13 +20,15 @@ import {
   CRITERION_LABEL,
   ESSAY_MAX_CHARS,
   ESSAY_MIN_CHARS,
-  LEVEL_LABEL,
-  RUBRIC,
   SAMPLE_ESSAY,
+  criterionLabel,
+  levelLabel,
+  rubricDescriptor,
   type CriterionKey,
   type EssayFeedback,
 } from "@/lib/essay";
 import type { Curriculum, Grade, Language } from "@/lib/options";
+import { gradeOptionsFor, useUi } from "@/lib/i18n";
 
 type Note = EssayFeedback["inlineNotes"][number] & {
   id: number;
@@ -101,6 +102,7 @@ function anchorNotes(essay: string, notes: EssayFeedback["inlineNotes"]): Note[]
 }
 
 function HighlightedEssay({ essay, notes, activeId, onPick }: { essay: string; notes: Note[]; activeId: number | null; onPick: (id: number) => void }) {
+  const { t } = useUi();
   const anchored = notes.filter((n) => n.start >= 0 && n.kept).sort((a, b) => a.start - b.start);
   const parts: React.ReactNode[] = [];
   let cursor = 0;
@@ -113,7 +115,7 @@ function HighlightedEssay({ essay, notes, activeId, onPick }: { essay: string; n
         id={`hl-${n.id}`}
         role="button"
         tabIndex={0}
-        aria-label={`Note ${n.id}: ${essay.slice(n.start, n.end)}`}
+        aria-label={t.essay.noteAria(n.id, essay.slice(n.start, n.end))}
         onClick={() => onPick(n.id)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -150,23 +152,25 @@ function ScoreCard({
   nextStep: string;
   onScore: (s: number) => void;
 }) {
+  const { lang, t } = useUi();
+  const name = criterionLabel(criterion, lang);
   return (
     <div className="rounded-2xl border border-line bg-white p-5">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="font-semibold leading-snug">{CRITERION_LABEL[criterion]}</h3>
+        <h3 className="font-semibold leading-snug">{name}</h3>
         <p className="shrink-0 text-right text-sm leading-tight text-iron">
           <span className="font-serif text-3xl text-ink">{score}</span>/4
-          <span className="block">{LEVEL_LABEL[score]}</span>
+          <span className="block">{levelLabel(score, lang)}</span>
         </p>
       </div>
-      <div role="radiogroup" aria-label={`${CRITERION_LABEL[criterion]} score`} className="mt-3 grid grid-cols-4 gap-1.5">
+      <div role="radiogroup" aria-label={t.essay.scoreAria(name)} className="mt-3 grid grid-cols-4 gap-1.5">
         {[1, 2, 3, 4].map((s) => (
           <button
             key={s}
             type="button"
             role="radio"
             aria-checked={score === s}
-            aria-label={`${s}, ${LEVEL_LABEL[s]}`}
+            aria-label={`${s}, ${levelLabel(s, lang)}`}
             onClick={() => onScore(s)}
             className={`h-9 rounded-lg border text-sm font-semibold transition-colors ${
               score === s ? "border-ink bg-ink text-paper" : s <= score ? "border-sand bg-cream-deep text-ink" : "border-line bg-white text-iron hover:bg-cream"
@@ -177,12 +181,12 @@ function ScoreCard({
         ))}
       </div>
       <p className="mt-2 text-xs text-iron">
-        {score}: {RUBRIC[criterion][score - 1]}
-        {aiScore === 0 ? <> · the AI didn&apos;t score this, so set it yourself</> : score !== aiScore ? <> · you changed this from the AI&apos;s {aiScore}</> : null}
+        {score}: {rubricDescriptor(criterion, score, lang)}
+        {aiScore === 0 ? <> · {t.essay.notScored}</> : score !== aiScore ? <> · {t.essay.changed(aiScore)}</> : null}
       </p>
       <p className="mt-3 text-[0.95rem] text-ink">{reason}</p>
       <p className="mt-2 text-[0.95rem] text-iron">
-        <span className="font-semibold text-purple-deep">Next step: </span>
+        <span className="font-semibold text-purple-deep">{t.essay.nextStep} </span>
         {nextStep}
       </p>
     </div>
@@ -190,11 +194,15 @@ function ScoreCard({
 }
 
 export function EssayGrader() {
+  const { lang: uiLang, t: ui } = useUi();
+  const E = ui.essay;
   const [essay, setEssay] = useState("");
   const [prompt, setPrompt] = useState("");
   const [grade, setGrade] = useState<Grade>("8");
   const [curriculum, setCurriculum] = useState<Curriculum>("general");
-  const [language, setLanguage] = useState<Language>("en");
+  // Feedback language follows the UI language until the teacher picks one.
+  const [languageChoice, setLanguage] = useState<Language | null>(null);
+  const language: Language = languageChoice ?? uiLang;
   const [moreOpen, setMoreOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -229,7 +237,7 @@ export function EssayGrader() {
       setSummary(fb.studentSummary ?? "");
       requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setError(e instanceof Error ? e.message : ui.genericError);
     } finally {
       setLoading(false);
     }
@@ -249,10 +257,11 @@ export function EssayGrader() {
     if (!feedback) return "";
     const lines = [summary.trim()];
     if (includeScores) {
-      lines.push("", ...(Object.keys(scores) as CriterionKey[]).map((k) => `${CRITERION_LABEL[k]}: ${scores[k]}/4 (${LEVEL_LABEL[scores[k]]})`));
+      // Labels in the shared text follow the feedback language (what the student reads).
+      lines.push("", ...(Object.keys(scores) as CriterionKey[]).map((k) => `${criterionLabel(k, language)}: ${scores[k]}/4 (${levelLabel(scores[k], language)})`));
     }
     return lines.join("\n");
-  }, [feedback, summary, includeScores, scores]);
+  }, [feedback, summary, includeScores, scores, language]);
 
   const pickNote = (id: number) => {
     setActiveId(id);
@@ -262,12 +271,12 @@ export function EssayGrader() {
   return (
     <div className="mt-8 space-y-8">
       {/* Step 1: paste */}
-      <section aria-label="Paste the essay" className="no-print grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <section aria-label={E.pasteAria} className="no-print grid gap-6 lg:grid-cols-[1fr_20rem]">
         <div>
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <Label htmlFor="essay">Student essay</Label>
+            <Label htmlFor="essay">{E.essayLabel}</Label>
             <Button type="button" variant="ghost" onClick={loadSample} className="-mt-2 min-h-9 px-3 text-sm">
-              Try a sample essay
+              {E.sample}
             </Button>
           </div>
           <TextArea
@@ -275,24 +284,24 @@ export function EssayGrader() {
             value={essay}
             onChange={(e) => setEssay(e.target.value)}
             rows={14}
-            placeholder="Paste the essay here. Remove the student's name first."
+            placeholder={E.essayPh}
             aria-describedby="essay-help"
           />
           <p id="essay-help" className="mt-2 flex flex-wrap justify-between gap-2 text-sm text-iron">
-            <span>Don&apos;t include the student&apos;s name or personal details. In Türkiye, using AI on student work needs a YAZEK ethics declaration.</span>
+            <span>{E.help}</span>
             <span className={chars > ESSAY_MAX_CHARS ? "text-alert" : ""}>
-              {chars < ESSAY_MIN_CHARS ? `${ESSAY_MIN_CHARS - chars} more characters needed` : `${chars.toLocaleString()} / ${ESSAY_MAX_CHARS.toLocaleString()}`}
+              {chars < ESSAY_MIN_CHARS ? E.charsNeeded(ESSAY_MIN_CHARS - chars) : `${chars.toLocaleString(uiLang)} / ${ESSAY_MAX_CHARS.toLocaleString(uiLang)}`}
             </span>
           </p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="grade">Grade</Label>
-            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptions} />
+            <Label htmlFor="grade">{ui.grade}</Label>
+            <Select id="grade" value={grade} onChange={(v) => setGrade(v as Grade)} options={gradeOptionsFor(uiLang)} />
           </div>
           <div>
-            <Label htmlFor="language">Feedback language</Label>
+            <Label htmlFor="language">{E.feedbackLang}</Label>
             <Select id="language" value={language} onChange={(v) => setLanguage(v as Language)} options={languageOptions} />
           </div>
           <button
@@ -301,41 +310,38 @@ export function EssayGrader() {
             onClick={() => setMoreOpen((o) => !o)}
             className="text-sm font-semibold text-orange-ink underline-offset-4 hover:underline"
           >
-            {moreOpen ? "Fewer options" : "More options"}
+            {moreOpen ? ui.fewerOptions : ui.moreOptions}
           </button>
           {moreOpen ? (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="prompt" hint="(optional)">Essay question</Label>
-                <TextInput id="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. Should schools ban phones?" />
+                <Label htmlFor="prompt" hint={ui.optional}>{E.question}</Label>
+                <TextInput id="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={E.questionPh} />
               </div>
               <div>
-                <Label htmlFor="curriculum">Curriculum</Label>
+                <Label htmlFor="curriculum">{ui.curriculum}</Label>
                 <Select id="curriculum" value={curriculum} onChange={(v) => setCurriculum(v as Curriculum)} options={curriculumOptions} />
               </div>
             </div>
           ) : null}
           <Button type="button" onClick={submit} disabled={!canSubmit} className="w-full">
-            {loading ? "Reading the essay…" : "Get feedback"}
+            {loading ? E.submitting : E.submit}
           </Button>
         </div>
       </section>
 
       <div ref={resultRef} className="scroll-mt-24 space-y-8">
         {loading ? (
-          <LoadingSteps steps={["Reading the essay", "Scoring 4 criteria against the grade", "Writing margin notes with examples", "Drafting a summary for the student"]} />
+          <LoadingSteps steps={E.steps} />
         ) : null}
         {error ? <ErrorNote message={error} onRetry={canSubmit ? submit : undefined} /> : null}
 
         {!loading && !error && !feedback ? (
-          <EmptyState title="Feedback appears here">
-            Paste an essay (or try the sample) and press <strong>Get feedback</strong>. You&apos;ll be able to change every
-            score and note before anything reaches the student.
-          </EmptyState>
+          <EmptyState title={E.emptyTitle}>{E.emptyBody}</EmptyState>
         ) : null}
 
         {feedback && !feedback.isEssay ? (
-          <ErrorNote message="This doesn't look like a student essay, so there's nothing to assess. Paste the student's writing and try again." />
+          <ErrorNote message={E.notEssay} />
         ) : null}
 
         {feedback && feedback.isEssay ? (
@@ -344,18 +350,18 @@ export function EssayGrader() {
             <section aria-labelledby="step-review" className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 id="step-review" className="font-serif text-[2rem] leading-tight">
-                  Review the draft
+                  {E.review}
                 </h2>
                 <div className="flex items-center gap-3">
                   <DraftBadge approved={approved} />
                   <p className="text-sm text-iron">
-                    Total <span className="font-serif text-2xl text-ink">{total}</span>/16
+                    {E.total} <span className="font-serif text-2xl text-ink">{total}</span>/16
                   </p>
                 </div>
               </div>
               {feedback.teacherNote ? (
                 <p className="rounded-xl bg-cream px-4 py-3 text-[0.95rem] text-ink">
-                  <span className="font-semibold">For you: </span>
+                  <span className="font-semibold">{E.forYou} </span>
                   {feedback.teacherNote}
                 </p>
               ) : null}
@@ -380,10 +386,10 @@ export function EssayGrader() {
               </div>
 
               <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-                <article aria-label="Essay with margin notes" className="rounded-2xl border border-line bg-white p-6 shadow-sheet sm:p-8">
+                <article aria-label={E.essayAria} className="rounded-2xl border border-line bg-white p-6 shadow-sheet sm:p-8">
                   <HighlightedEssay essay={submittedEssay} notes={notes} activeId={activeId} onPick={pickNote} />
                 </article>
-                <ol aria-label="Margin notes" className="space-y-3 lg:max-h-[46rem] lg:overflow-auto lg:pr-1">
+                <ol aria-label={E.notesAria} className="space-y-3 lg:max-h-[46rem] lg:overflow-auto lg:pr-1">
                   {notes.map((n) => {
                     const strength = n.kind === "strength";
                     return (
@@ -397,7 +403,7 @@ export function EssayGrader() {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <p className={`text-sm font-semibold ${strength ? "text-mint" : "text-purple-deep"}`}>
-                            {n.id}. {strength ? "Working well" : "To improve"} · {CRITERION_LABEL[n.criterion]}
+                            {n.id}. {strength ? E.workingWell : E.toImprove} · {criterionLabel(n.criterion, uiLang)}
                           </p>
                           <button
                             type="button"
@@ -407,22 +413,22 @@ export function EssayGrader() {
                             }}
                             className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-iron hover:bg-cream-deep"
                           >
-                            <span className="sr-only">{n.kept ? `Remove note ${n.id}` : `Restore note ${n.id}`}</span>
-                            <span aria-hidden="true">{n.kept ? "Remove" : "Restore"}</span>
+                            <span className="sr-only">{n.kept ? E.removeNote(n.id) : E.restoreNote(n.id)}</span>
+                            <span aria-hidden="true">{n.kept ? E.remove : E.restore}</span>
                           </button>
                         </div>
                         <blockquote className="mt-2 border-l-2 border-line pl-3 font-serif text-[1.05rem] italic text-iron">
                           &ldquo;{n.quote}&rdquo;
                           {n.unplaced ? (
                             <span className="ml-1 font-sans text-xs not-italic">
-                              {n.unplaced === "overlap" ? "(overlaps another note)" : "(not found in the text)"}
+                              {n.unplaced === "overlap" ? E.overlap : E.notFound}
                             </span>
                           ) : null}
                         </blockquote>
                         <p className="mt-2 text-[0.95rem] text-ink">{n.note}</p>
                         {n.example ? (
                           <p className="mt-2 rounded-lg bg-cream px-3 py-2 text-[0.95rem] text-ink">
-                            <span className="font-semibold">{strength ? "Why it works: " : "Try: "}</span>
+                            <span className="font-semibold">{strength ? E.whyWorks : E.tryRewrite} </span>
                             {n.example}
                           </p>
                         ) : null}
@@ -436,11 +442,11 @@ export function EssayGrader() {
             {/* Step 3: share */}
             <section aria-labelledby="step-share" className="rounded-2xl border border-line bg-cream p-5 sm:p-7">
               <h2 id="step-share" className="font-serif text-[2rem] leading-tight">
-                Summary for the student
+                {E.summaryTitle}
               </h2>
-              <p className="mt-1 text-iron">Edit it until it sounds like you. Approve it to copy or print.</p>
+              <p className="mt-1 text-iron">{E.summaryHint}</p>
               <TextArea
-                aria-label="Summary for the student"
+                aria-label={E.summaryTitle}
                 value={summary}
                 onChange={(e) => {
                   setSummary(e.target.value);
@@ -459,7 +465,7 @@ export function EssayGrader() {
                   }}
                   className="h-4.5 w-4.5 accent-[#a85d16]"
                 />
-                Include the four scores
+                {E.includeScores}
               </label>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 {!approved ? (
@@ -471,14 +477,14 @@ export function EssayGrader() {
                     }}
                     disabled={!summary.trim()}
                   >
-                    Approve feedback
+                    {E.approve}
                   </Button>
                 ) : (
                   <>
                     <DraftBadge approved />
-                    <CopyButton id="copy-for-student" text={shareText} label="Copy for the student" variant="primary" />
+                    <CopyButton id="copy-for-student" text={shareText} label={E.copyForStudent} variant="primary" />
                     <Button type="button" variant="quiet" onClick={() => window.print()}>
-                      Print
+                      {ui.print}
                     </Button>
                   </>
                 )}

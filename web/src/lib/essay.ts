@@ -33,6 +33,31 @@ export const RUBRIC: Record<CriterionKey, [string, string, string, string]> = {
 
 export const LEVEL_LABEL = ["", "Needs work", "Developing", "Secure", "Exceeding"] as const;
 
+// Turkish UI labels. Level names follow the MEB ODSGM analytic rubric wording.
+const CRITERION_LABEL_TR: Record<CriterionKey, string> = {
+  argument: "Argüman ve fikirler",
+  evidence: "Kanıt ve geliştirme",
+  structure: "Yapı ve bütünlük",
+  language: "Dil ve yazım kuralları",
+};
+const LEVEL_LABEL_TR = ["", "İyileştirme gerekiyor", "Gelişiyor", "Yeterli", "Ortalamanın üzerinde"] as const;
+const RUBRIC_TR: Record<CriterionKey, [string, string, string, string]> = {
+  argument: ["Net bir görüş yok", "Görüş var ama dağılıyor", "Net ve büyük ölçüde sürdürülen görüş", "Net, derinlikli ve baştan sona sürdürülen görüş"],
+  evidence: ["Yalnızca iddia", "Birkaç örnek, az açıklama", "Açıklanan, ilgili örnekler", "İddiaya bağlanmış, iyi seçilmiş ve çözümlenmiş kanıt"],
+  structure: ["Takip etmesi zor", "Temel sıra var, bağlar zayıf", "Mantıklı paragraflar ve geçişler", "Akıcı ve amaca uygun yapı"],
+  language: ["Hatalar anlamı engelliyor", "Dikkat dağıtan sık hatalar", "Yalnızca küçük hatalar", "Özenli, çeşitli ve neredeyse hatasız"],
+};
+
+export function criterionLabel(k: CriterionKey, lang: "en" | "tr"): string {
+  return lang === "tr" ? CRITERION_LABEL_TR[k] : CRITERION_LABEL[k];
+}
+export function levelLabel(n: number, lang: "en" | "tr"): string {
+  return (lang === "tr" ? LEVEL_LABEL_TR : LEVEL_LABEL)[n] ?? "";
+}
+export function rubricDescriptor(k: CriterionKey, n: number, lang: "en" | "tr"): string {
+  return (lang === "tr" ? RUBRIC_TR : RUBRIC)[k][n - 1] ?? "";
+}
+
 // Field order matters: the model writes the evidence-based reason BEFORE choosing the score.
 const criterionResult = z.object({
   criterion: z.enum(CRITERIA),

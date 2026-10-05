@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { CURRICULA, GRADES, LANGUAGES } from "@/lib/options";
+import { DICT, currentUiLang, useUi } from "@/lib/i18n";
 
 export function PageIntro({ forWho, title, children }: { forWho: string; title: string; children: ReactNode }) {
   return (
@@ -89,21 +90,23 @@ export function Chip({ children, onClick }: { children: ReactNode; onClick: () =
 
 /** Purple = the AI's voice. Every AI output carries this badge until the teacher approves it. */
 export function DraftBadge({ approved = false }: { approved?: boolean }) {
+  const { t } = useUi();
   return approved ? (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-mint-soft px-3 py-1 text-sm font-semibold text-mint">
       <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-      Approved by you
+      {t.approved}
     </span>
   ) : (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-soft px-3 py-1 text-sm font-semibold text-purple-deep">
       <svg aria-hidden="true" viewBox="0 0 16 16" className="h-3.5 w-3.5"><path d="M2.5 13.5l1-3.5 7.5-7.5 2.5 2.5L6 12.5z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
-      AI draft: check before using
+      {t.draft}
     </span>
   );
 }
 
 /** Named progress steps instead of a bare spinner. Advances on a timer while waiting. */
-export function LoadingSteps({ steps, everyMs = 2600 }: { steps: string[]; everyMs?: number }) {
+export function LoadingSteps({ steps, everyMs = 2600 }: { steps: readonly string[]; everyMs?: number }) {
+  const { t } = useUi();
   const [i, setI] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setI((n) => Math.min(n + 1, steps.length - 1)), everyMs);
@@ -126,18 +129,19 @@ export function LoadingSteps({ steps, everyMs = 2600 }: { steps: string[]; every
           </li>
         ))}
       </ol>
-      <p className="mt-4 text-sm text-iron">This usually takes 10–25 seconds.</p>
+      <p className="mt-4 text-sm text-iron">{t.takesTime}</p>
     </div>
   );
 }
 
 export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const { t } = useUi();
   return (
     <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-alert/30 bg-alert-soft px-5 py-4 text-ink">
       <p>{message}</p>
       {onRetry ? (
         <Button variant="quiet" onClick={onRetry}>
-          Try again
+          {t.tryAgain}
         </Button>
       ) : null}
     </div>
@@ -147,7 +151,7 @@ export function ErrorNote({ message, onRetry }: { message: string; onRetry?: () 
 /** `text` may be a function so the value is read at click time (e.g. after the user edits). */
 export function CopyButton({
   text,
-  label = "Copy",
+  label,
   variant = "quiet",
   id,
 }: {
@@ -156,6 +160,7 @@ export function CopyButton({
   variant?: ButtonProps["variant"];
   id?: string;
 }) {
+  const { t } = useUi();
   const [state, setState] = useState<"idle" | "done" | "failed">("idle");
   return (
     <Button
@@ -172,7 +177,7 @@ export function CopyButton({
         setTimeout(() => setState("idle"), 2200);
       }}
     >
-      <span aria-live="polite">{state === "done" ? "Copied" : state === "failed" ? "Couldn't copy: select the text instead" : label}</span>
+      <span aria-live="polite">{state === "done" ? t.copied : state === "failed" ? t.copyFailed : label ?? t.copy}</span>
     </Button>
   );
 }
@@ -188,13 +193,18 @@ export function EmptyState({ title, children }: { title: string; children: React
 
 /** Shared POST helper with friendly errors. */
 export async function postJson<T>(url: string, body: unknown): Promise<T> {
+  const lang = currentUiLang();
   let res: Response;
   try {
-    res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-ui-lang": lang },
+      body: JSON.stringify(body),
+    });
   } catch {
-    throw new Error("Can't reach the server. Check your internet connection and try again.");
+    throw new Error(DICT[lang].netError);
   }
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.error ?? "Something went wrong. Please try again.");
+  if (!res.ok) throw new Error(data?.error ?? DICT[lang].genericError);
   return data as T;
 }
